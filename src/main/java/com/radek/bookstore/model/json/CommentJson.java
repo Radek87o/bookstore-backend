@@ -1,5 +1,6 @@
 package com.radek.bookstore.model.json;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

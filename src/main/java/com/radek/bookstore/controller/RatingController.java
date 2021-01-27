@@ -7,13 +7,15 @@ import com.radek.bookstore.service.RatingService;
 import com.radek.bookstore.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @CrossOrigin
@@ -33,25 +35,25 @@ public class RatingController {
         this.userService = userService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<Rating>> getBooksRating(@RequestParam String bookId) {
-        if(Objects.isNull(bookId)) {
-            log.info("Cannot retrieve books rating due to given book id is null");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Given book id cannot be null");
+    @GetMapping(path = "/{bookId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getBooksRating(@PathVariable("bookId") String bookId) {
+        if(!bookService.existsByBookId(bookId)) {
+            String message = String.format("Cannot retrieve rating due to given book with id: %s does not exist", bookId);
+            return determineErrorResponseException(message, HttpStatus.NOT_FOUND);
         }
         List<Rating> bookRatings = ratingService.getBookRatings(bookId);
         return new ResponseEntity<>(bookRatings, HttpStatus.OK);
     }
 
-    @GetMapping(path = "/{bookId}/user/{userId}")
-    public ResponseEntity<Rating> getSingleRating(@PathVariable("bookId") String bookId, @PathVariable("userId") String userId) {
-        if(Objects.isNull(bookId)) {
-            log.info("Cannot retrieve rating due to given book id is null");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Given book id cannot be null");
+    @GetMapping(path = "/{bookId}/user/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getSingleRating(@PathVariable("bookId") String bookId, @PathVariable("userId") String userId) {
+        if(!bookService.existsByBookId(bookId)) {
+            String message = String.format("Cannot retrieve rating due to given book with id: %s does not exist", bookId);
+            return determineErrorResponseException(message, HttpStatus.NOT_FOUND);
         }
-        if(Objects.isNull(bookId)) {
-            log.info("Cannot retrieve rating due to given user id is null");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Given user id cannot be null");
+        if(!userService.existByUserId(userId)) {
+            String message = String.format("Cannot retrieve rating due to given user with id: %s does not exist", userId);
+            return determineErrorResponseException(message, HttpStatus.NOT_FOUND);
         }
         Optional<Rating> bookRatingOptional = ratingService.getBookRating(bookId, userId);
         Rating bookRating = bookRatingOptional.isEmpty()
@@ -61,29 +63,31 @@ public class RatingController {
     }
 
     @PostMapping(path = "/{bookId}/user/{userId}")
-    public ResponseEntity<Void> saveRating(@RequestBody RatingDto ratingDto, @PathVariable("bookId") String bookId, @PathVariable("userId") String userId){
-        if(Objects.isNull(ratingDto)) {
-            determineResponseException("Rating cannot be null", HttpStatus.BAD_REQUEST);
-        }
-        else if(Objects.isNull(bookId)) {
-            determineResponseException("Book id cannot be null", HttpStatus.BAD_REQUEST);
-        }
-        else if(Objects.isNull(userId)) {
-            determineResponseException("User id cannot be null", HttpStatus.BAD_REQUEST);
-        }
-        else if(!bookService.existsByBookId(bookId)) {
-            determineResponseException(String.format("Book with id: %s cannot be found", bookId), HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> saveRating(@Valid @RequestBody RatingDto ratingDto, @PathVariable("bookId") String bookId, @PathVariable("userId") String userId){
+        if(!bookService.existsByBookId(bookId)) {
+            String message = String.format("Book with id: %s cannot be found", bookId);
+            return determineErrorResponseException(message, HttpStatus.NOT_FOUND);
         }
         else if(!userService.existByUserId(userId)){
-            determineResponseException(String.format("User with id: %s cannot be found", userId), HttpStatus.NOT_FOUND);
+            String message = String.format("User with id: %s cannot be found", userId);
+            return determineErrorResponseException(message, HttpStatus.NOT_FOUND);
         }
-        ratingService.saveRating(ratingDto, bookId, userId);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        Optional<Collection<Rating>> bookRatings = ratingService.saveRating(ratingDto, bookId, userId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if(bookRatings.isEmpty()) {
+            String message = String.format("Passed rating of value: %d does not vary from current rating", ratingDto.getVote());
+            log.info(message);
+            return new ResponseEntity<>(message, headers, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(bookRatings.get(), headers, HttpStatus.CREATED);
     }
 
     //TODO - przenieś do osobnej klasy do obsługi wyjątków
-    private void determineResponseException(String message, HttpStatus httpStatus) {
+    private ResponseEntity<String> determineErrorResponseException(String message, HttpStatus httpStatus) {
         log.info(message);
-        throw new ResponseStatusException(httpStatus, message);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return new ResponseEntity<>(message, headers, httpStatus);
     }
 }

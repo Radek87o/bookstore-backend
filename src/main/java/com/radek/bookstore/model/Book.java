@@ -2,7 +2,6 @@ package com.radek.bookstore.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.radek.bookstore.model.dto.BookDto;
-import com.sun.istack.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,6 +10,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -37,7 +37,7 @@ public class Book {
     private String imageUrl;
     private Integer issueYear;
     private Integer pages;
-    private boolean isHardcover;
+    private Boolean isHardcover;
 
     @NotNull
     @ManyToOne
@@ -47,7 +47,7 @@ public class Book {
     private BigDecimal basePrice;
     private BigDecimal promoPrice;
 
-    private boolean active;
+    private Boolean active;
     private Integer unitsInStock;
 
     @CreationTimestamp
@@ -78,8 +78,6 @@ public class Book {
         this.issueYear=bookDto.getIssueYear();
         this.pages=bookDto.getPages();
         this.isHardcover=bookDto.isHardcover();
-        this.basePrice=bookDto.getBasePrice();
-        this.author=bookDto.getAuthor();
         this.basePrice=bookDto.getBasePrice();
         this.promoPrice=bookDto.getPromoPrice();
         this.active=bookDto.isActive();

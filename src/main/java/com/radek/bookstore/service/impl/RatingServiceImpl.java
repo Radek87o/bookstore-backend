@@ -11,12 +11,11 @@ import com.radek.bookstore.repository.UserRepository;
 import com.radek.bookstore.service.RatingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class RatingServiceImpl implements RatingService {
@@ -35,39 +34,63 @@ public class RatingServiceImpl implements RatingService {
 
     @Override
     public List<Rating> getBookRatings(String bookId) {
-        if(Objects.isNull(bookId)) {
-            log.info("Given bookId is null");
-            throw new BookStoreServiceException("Cannot find ratings due to null book id");
+        try {
+            return ratingRepository.findByBookId(bookId);
+        } catch (NonTransientDataAccessException exc) {
+            String message = "An error occurred during retrieving book ratings";
+            log.error(message, exc);
+            throw new BookStoreServiceException(message, exc);
         }
-        return ratingRepository.findByBookId(bookId);
     }
 
     @Override
     public Optional<Rating> getBookRating(String bookId, String userId) {
-        return ratingRepository.findByBookIdAndUserId(bookId, userId);
+        try {
+            return ratingRepository.findByBookIdAndUserId(bookId, userId);
+        } catch (NonTransientDataAccessException exc) {
+            String message = "An error occurred during retrieving single book rating";
+            log.error(message, exc);
+            throw new BookStoreServiceException(message, exc);
+        }
     }
 
     @Override
     @Transactional
-    public void saveRating(RatingDto ratingDto, String bookId, String userId) {
-        Optional<Rating> ratingOptional = ratingRepository.findByBookIdAndUserId(bookId, userId);
-        if(ratingOptional.isPresent()) {
-            Rating currentRating = ratingOptional.get();
-            if(currentRating.getVote()!=ratingDto.getVote()) {
-                currentRating.setVote(ratingDto.getVote());
-                ratingRepository.save(currentRating);
-                log.info("Succesfully changed rating to: {} for book with id: {} by user with id: {}", currentRating.getVote(), bookId, userId);
+    public Optional<Collection<Rating>> saveRating(RatingDto ratingDto, String bookId, String userId) {
+        try {
+            Optional<Rating> ratingOptional = ratingRepository.findByBookIdAndUserId(bookId, userId);
+            if(ratingOptional.isPresent()) {
+                Rating currentRating = ratingOptional.get();
+                if(currentRating.getVote()!=ratingDto.getVote()) {
+                    return saveUpdatedRating(currentRating, ratingDto, bookId, userId);
+                } else {
+                    return Optional.empty();
+                }
             } else {
-                return;
+                return saveNewRating(ratingDto, bookId, userId);
             }
-        } else {
-            Book book = bookRepository.findById(bookId).get();
-            User user = userRepository.findById(userId).get();
-            Rating rating = new Rating(ratingDto);
-            rating.setUser(user);
-            book.addRating(rating);
-            bookRepository.save(book);
-            log.info("Succesfully added new rating: {} for book with id: {} by user with id: {}", rating.getVote(), bookId, userId);
+        } catch (NonTransientDataAccessException exc) {
+            String message = "An error occurred during saving book rating";
+            log.error(message, exc);
+            throw new BookStoreServiceException(message, exc);
         }
+    }
+
+    private Optional<Collection<Rating>> saveNewRating(RatingDto ratingDto, String bookId, String userId) {
+        Book book = bookRepository.findById(bookId).get();
+        User user = userRepository.findById(userId).get();
+        Rating rating = new Rating(ratingDto);
+        rating.setUser(user);
+        book.addRating(rating);
+        Book savedBook = bookRepository.save(book);
+        log.info("Succesfully added new rating: {} for book with id: {} by user with id: {}", rating.getVote(), bookId, userId);
+        return Optional.of(savedBook.getRatings());
+    }
+
+    private Optional<Collection<Rating>> saveUpdatedRating(Rating currentRating, RatingDto updatedRating, String bookId, String userId) {
+        currentRating.setVote(updatedRating.getVote());
+        Rating newRating = ratingRepository.save(currentRating);
+        log.info("Succesfully changed newRating to: {} for book with id: {} by user with id: {}", currentRating.getVote(), bookId, userId);
+        return Optional.of(Collections.singleton(newRating));
     }
 }
