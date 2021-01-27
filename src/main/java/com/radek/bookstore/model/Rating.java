@@ -10,7 +10,8 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,7 +26,8 @@ public class Rating {
     @GeneratedValue(generator = "rating_id")
     private String id;
 
-    @Size(max = 5)
+    @Min(value = 1)
+    @Max(value = 5)
     private Integer vote;
 
     @CreationTimestamp
