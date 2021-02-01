@@ -98,4 +98,20 @@ public class BookController {
         headers.setContentType(MediaType.APPLICATION_JSON);
         return new ResponseEntity<>(books, headers, HttpStatus.CREATED);
     }
+
+    @GetMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Page<Book>> searchBookByKeyword(@RequestParam(value = "keyword", required = false) String keyword,
+                                                          @RequestParam(name = "page", required = false) Integer page,
+                                                          @RequestParam(name = "size", required = false) Integer size) {
+        if(Objects.isNull(page)) {
+            page=0;
+        }
+        if(Objects.isNull(size)) {
+            size=24;
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Page<Book> bookByKeyword = bookService.findBookByKeyword(keyword, page, size);
+        return new ResponseEntity<>(bookByKeyword, headers, HttpStatus.OK);
+    }
 }

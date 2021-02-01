@@ -302,6 +302,77 @@ class BookControllerTest {
         verify(bookService, never()).saveBook(bookDto);
     }
 
+    @Test
+    void shouldSearchBookByKeywordMethodReturnOkStatusWithNonEmptyPageOfBooksWhenNonNullKeywordPassed() throws Exception {
+        Page<Book> books = getTestBooksCollection();
+        String keyword = "someKeyword";
+
+        when(bookService.findBookByKeyword(keyword, 0, 24)).thenReturn(books);
+        String url = "/api/books/search";
+
+        mockMvc.perform(get(url)
+                .param("keyword", keyword)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(books)));
+
+        verify(bookService).findBookByKeyword(keyword, 0, 24);
+    }
+
+    @Test
+    void shouldSearchBookByKeywordMethodReturnOkStatusWithNonEmptyPageOfBooksWhenNonNullKeywordWithPageableParamsPassed() throws Exception {
+        Page<Book> books = getTestBooksCollection();
+        String keyword = "someKeyword";
+
+        when(bookService.findBookByKeyword(keyword, 0, 5)).thenReturn(books);
+        String url = "/api/books/search";
+
+        mockMvc.perform(get(url)
+                .param("keyword", keyword)
+                .param("page", "0")
+                .param("size", "5")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(books)));
+
+        verify(bookService).findBookByKeyword(keyword, 0, 5);
+    }
+
+    @Test
+    void shouldSearchBookByKeywordMethodReturnOkStatusWithEmptyPageWhenAnyBookContainsKeyword() throws Exception {
+        String keyword = "someKeyword";
+
+        when(bookService.findBookByKeyword(keyword, 0, 5)).thenReturn(Page.empty());
+        String url = "/api/books/search";
+
+        mockMvc.perform(get(url)
+                .param("keyword", keyword)
+                .param("page", "0")
+                .param("size", "5")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(Page.empty())));
+
+        verify(bookService).findBookByKeyword(keyword, 0, 5);
+    }
+
+    @Test
+    void shouldSearchBookByKeywordMethodReturnOkStatusWithEmptyPageWhenKeywordIsNull() throws Exception {
+        when(bookService.findBookByKeyword(null, 0, 24)).thenReturn(Page.empty());
+        String url = "/api/books/search";
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(Page.empty())));
+
+        verify(bookService).findBookByKeyword(null, 0, 24);
+    }
+
     private Page<Book> getTestBooksCollection() {
         Book book1 = BookGenerator.generateBook(LocalDateTime.of(LocalDate.of(2020, 1, 21), LocalTime.now()));
         Book book2 = BookGenerator.generateBook(LocalDateTime.of(LocalDate.of(2020, 1, 11), LocalTime.now()));

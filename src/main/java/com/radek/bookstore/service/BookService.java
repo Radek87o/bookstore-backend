@@ -14,4 +14,5 @@ public interface BookService {
     boolean existsByBookId(String id);
     Set<Book> saveBook(BookDto bookDto);
     Optional<Book> findBookByTitle(BookDto bookDto);
+    Page<Book> findBookByKeyword(String keyword, Integer pageNumber, Integer pageSize);
 }
