@@ -113,6 +113,18 @@ public class BookServiceImpl implements BookService {
         }
     }
 
+    @Override
+    public Page<Book> findBookByKeyword(String keyword, Integer pageNumber, Integer pageSize) {
+        try {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            return bookRepository.findBookByKeyword(keyword, pageable);
+        } catch (NonTransientDataAccessException exc) {
+            String message = "An error occurred during attempt to find book by keyword.";
+            log.error(message, exc);
+            throw new BookStoreServiceException(message, exc);
+        }
+    }
+
     private boolean isBookAuthorsMatching(Author author, AuthorDto authorDto) {
         boolean firstNameMatching = author.getFirstName().trim().equalsIgnoreCase(authorDto.getFirstName().trim());
         boolean lastNameMatching = author.getLastName().trim().equalsIgnoreCase(authorDto.getLastName().trim());

@@ -56,7 +56,7 @@ class BookServiceTest {
 
     @Test
     void shouldListAllBooks() {
-        Page<Book> booksPage = generateExampleListOfBooks();
+        Page<Book> booksPage = generateExamplePageOfBooks();
 
         when(bookRepository.findAll(PageRequest.of(0,5, Sort.by("createdDate").descending()))).thenReturn(booksPage);
         Page<Book> resultZero = bookService.listAllBooks(0, 5);
@@ -309,7 +309,46 @@ class BookServiceTest {
         verify(bookRepository).findByTitle(bookDto.getTitle());
     }
 
-    private Page<Book> generateExampleListOfBooks() {
+    @Test
+    void shouldFindBookByKeywordMethodReturnNonEmptyPageOfBookWhenExistBooksContainingPassedKeyword() {
+        Page<Book> books = generateExamplePageOfBooks();
+        String keyword = "testKeyword";
+        when(bookRepository.findBookByKeyword(keyword, PageRequest.of(0,5))).thenReturn(books);
+
+        Page<Book> result = bookService.findBookByKeyword(keyword, 0, 5);
+
+        assertEquals(books.getContent().size(), result.getContent().size());
+        assertEquals(books.getContent(), result.getContent());
+
+        verify(bookRepository).findBookByKeyword(keyword, PageRequest.of(0,5));
+    }
+
+    @Test
+    void shouldFindBookByKeywordMethodReturnEmptyPageOfBookWhenDoNotExistBooksContainingPassedKeyword() {
+        String keyword = "testKeyword";
+        when(bookRepository.findBookByKeyword(keyword, PageRequest.of(0,5))).thenReturn(Page.empty());
+
+        Page<Book> result = bookService.findBookByKeyword(keyword, 0, 5);
+
+        assertEquals(Page.empty(), result);
+
+        verify(bookRepository).findBookByKeyword(keyword, PageRequest.of(0,5));
+    }
+
+    @Test
+    void shouldFindBookByKeywordMethodThrowBookstoreServiceExceptionWhenNonNonTransientDataAccessExceptionOccur() {
+        String keyword = "testKeyword";
+        PageRequest pageRequest = PageRequest.of(0, 5);
+        doThrow(new NonTransientDataAccessException(""){})
+                .when(bookRepository).findBookByKeyword(keyword, pageRequest);
+
+        assertThrows(BookStoreServiceException.class,
+                () -> bookService.findBookByKeyword(keyword, 0, 5));
+
+        verify(bookRepository).findBookByKeyword(keyword, pageRequest);
+    }
+
+    private Page<Book> generateExamplePageOfBooks() {
         Book book1 = BookGenerator.generateBook(LocalDateTime.of(LocalDate.of(2021, 1, 17), LocalTime.now()));
         Book book2 = BookGenerator.generateBook(LocalDateTime.of(LocalDate.of(2021, 1, 12), LocalTime.now()));
         Book book3 = BookGenerator.generateBook(LocalDateTime.of(LocalDate.of(2021, 1, 14), LocalTime.now()));
