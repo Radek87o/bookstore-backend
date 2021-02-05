@@ -155,7 +155,7 @@ class BookServiceTest {
 
     @Test
     void shouldExistByIdMethodReturnTrueWhenBookWithGivenIdExists() {
-        String bookId = "TestNonExistingBookId";
+        String bookId = "TestExistingBookId";
         when(bookRepository.existsById(bookId)).thenReturn(true);
 
         boolean result = bookService.existsByBookId(bookId);
