@@ -38,8 +38,7 @@ public class CommentController {
 
     @GetMapping(path = "/{bookId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getCommentsByBookId(@PathVariable("bookId") String bookId,
-                                                              @RequestParam(required = false) Integer pageNumber,
-                                                              @RequestParam(required = false) Integer pageSize) {
+                                                              @RequestParam(required = false) Integer pageNumber) {
         if(!bookService.existsByBookId(bookId)){
             String message = String.format("Cannot find book with id: %s", bookId);
             log.info(message);
@@ -48,8 +47,7 @@ public class CommentController {
             return new ResponseEntity<>(message, responseHeaders, HttpStatus.BAD_REQUEST);
         }
         pageNumber = Objects.isNull(pageNumber) ? 0 : pageNumber;
-        pageSize = Objects.isNull(pageSize) ? 10 : pageSize;
-        Page<CommentJson> bookComments = commentService.getCommentsByBookId(bookId, pageNumber, pageSize);
+        Page<CommentJson> bookComments = commentService.getCommentsByBookId(bookId, pageNumber);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.APPLICATION_JSON);
         return new ResponseEntity<>(bookComments, responseHeaders, HttpStatus.OK);
