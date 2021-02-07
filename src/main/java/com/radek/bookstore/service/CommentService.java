@@ -8,6 +8,6 @@ import org.springframework.data.domain.Page;
 import java.util.Collection;
 
 public interface CommentService {
-    Page<CommentJson> getCommentsByBookId(String bookId, Integer pageNumber, Integer pageSize);
+    Page<CommentJson> getCommentsByBookId(String bookId, Integer pageNumber);
     Collection<Comment> saveComment(CommentDto commentDto, String bookId, String userId);
 }

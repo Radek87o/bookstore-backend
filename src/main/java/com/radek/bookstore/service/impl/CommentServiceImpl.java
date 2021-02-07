@@ -13,15 +13,16 @@ import com.radek.bookstore.repository.UserRepository;
 import com.radek.bookstore.service.CommentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,15 +45,22 @@ public class CommentServiceImpl implements CommentService {
 
 
     @Override
-    public Page<CommentJson> getCommentsByBookId(String bookId, Integer pageNumber, Integer pageSize) {
+    public Page<CommentJson> getCommentsByBookId(String bookId, Integer pageNumber) {
         try {
-            PageRequest pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "updateDate"));
-            Page<Comment> comments = commentRepository.findByBookId(bookId, pageable);
-            if(comments.getContent().isEmpty()) {
+            List<Comment> comments = commentRepository.findByBookId(bookId);
+            if(comments.isEmpty()) {
                 return Page.empty();
             }
             List<CommentJson> commentJsonCollection = mapCommentsToCommentsJson(comments);
-            return new PageImpl<>(commentJsonCollection);
+            List<CommentJson> sortedCommentJsonCollection = commentJsonCollection.stream()
+                    .sorted(Comparator.comparing(CommentJson::getUpdateDate).reversed())
+                    .collect(Collectors.toList());
+            PagedListHolder<CommentJson> listHolder = new PagedListHolder<>(sortedCommentJsonCollection);
+            listHolder.setPage(pageNumber);
+            listHolder.setPageSize(10);
+            return new PageImpl<>(listHolder.getPageList(),
+                                  PageRequest.of(pageNumber, 10),
+                                  sortedCommentJsonCollection.size());
         } catch (NonTransientDataAccessException exc) {
             String message = "An error occurred during retrieving comments by bookId";
             log.error(message, exc);
@@ -79,11 +87,11 @@ public class CommentServiceImpl implements CommentService {
         }
     }
 
-    private List<CommentJson> mapCommentsToCommentsJson(Page<Comment> comments) {
-        return comments.getContent()
+    private List<CommentJson> mapCommentsToCommentsJson(List<Comment> comments) {
+        return comments
                 .stream()
                 .map(comment -> commentJsonMapper.map(comment, CommentJson.class))
-                .map(commentJson -> determineUsernamesToDisplay(comments.getContent(), commentJson))
+                .map(commentJson -> determineUsernamesToDisplay(comments, commentJson))
                 .collect(Collectors.toList());
     }
 

@@ -30,10 +30,12 @@ public class Comment {
     @UpdateTimestamp
     private LocalDateTime updateDate;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "book_id")
     private Book book;
-    
+
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

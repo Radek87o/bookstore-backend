@@ -59,7 +59,7 @@ class CommentControllerTest {
         Page<CommentJson> commentsJson = getPageOfTestCommentsJson();
 
         when(bookService.existsByBookId(bookId)).thenReturn(true);
-        when(commentService.getCommentsByBookId(bookId, 0, 10)).thenReturn(commentsJson);
+        when(commentService.getCommentsByBookId(bookId, 0)).thenReturn(commentsJson);
 
         String url = String.format("/api/comments/%s", bookId);
 
@@ -69,7 +69,7 @@ class CommentControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(commentsJson)));
 
-        verify(commentService).getCommentsByBookId(bookId, 0, 10);
+        verify(commentService).getCommentsByBookId(bookId, 0);
     }
 
     @Test
@@ -79,19 +79,18 @@ class CommentControllerTest {
 
         when(bookService.existsByBookId(bookId)).thenReturn(true);
 
-        when(commentService.getCommentsByBookId(bookId, 0, 3)).thenReturn(commentsJson);
+        when(commentService.getCommentsByBookId(bookId, 0)).thenReturn(commentsJson);
 
         String url = String.format("/api/comments/%s", bookId);
 
         mockMvc.perform(get(url)
                 .param("pageNumber", "0")
-                .param("pageSize", "3")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(commentsJson)));
 
-        verify(commentService).getCommentsByBookId(bookId, 0, 3);
+        verify(commentService).getCommentsByBookId(bookId, 0);
     }
 
     @Test
@@ -108,7 +107,7 @@ class CommentControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
-        verify(commentService, never()).getCommentsByBookId(bookId, 0, 10);
+        verify(commentService, never()).getCommentsByBookId(bookId, 0);
     }
 
     @Test

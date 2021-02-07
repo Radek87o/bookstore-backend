@@ -8,6 +8,7 @@ import com.radek.bookstore.repository.CategoryRepository;
 import com.radek.bookstore.service.CategoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -47,7 +48,10 @@ public class CategoryServiceImpl implements CategoryService {
             List<Book> booksList = categoriesBooks.stream()
                     .sorted(Comparator.comparing(Book::getCreatedDate).reversed())
                     .collect(Collectors.toList());
-            PageImpl<Book> books = new PageImpl<>(booksList, PageRequest.of(page, size), booksList.size());
+            PagedListHolder<Book> listHolder = new PagedListHolder<>(booksList);
+            listHolder.setPage(page);
+            listHolder.setPageSize(size);
+            PageImpl<Book> books = new PageImpl<>(listHolder.getPageList(), PageRequest.of(page, size), booksList.size());
             return CategoryWrapper.builder()
                     .id(category.getId())
                     .name(category.getName())

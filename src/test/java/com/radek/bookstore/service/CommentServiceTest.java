@@ -24,15 +24,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,33 +59,30 @@ class CommentServiceTest {
     void shouldGetCommentsByBookIdMethodReturnPageOfComments() {
         String bookId = "testBookId";
         PageRequest pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updateDate"));
-        Page<Comment> comments = generateExampleOfCommentsPage();
-        when(commentRepository.findByBookId(bookId, pageable)).thenReturn(comments);
+        List<Comment> comments = generateExampleOfCommentsPage();
+        when(commentRepository.findByBookId(bookId)).thenReturn(comments);
 
-        Page<CommentJson> result = commentService.getCommentsByBookId(bookId, 0, 5);
+        Page<CommentJson> result = commentService.getCommentsByBookId(bookId, 0);
         CommentJson resultFirstElement = result.getContent().get(0);
-        Comment commentsFirstElement = comments.getContent().get(0);
+        Comment commentsFirstElement = comments.get(0);
 
-        assertEquals(comments.getTotalElements(), result.getTotalElements());
-        assertEquals(comments.getTotalPages(), result.getTotalPages());
+        assertEquals(comments.size(), result.getTotalElements());
         assertEquals(commentsFirstElement.getContent(), resultFirstElement.getContent());
         assertEquals(commentsFirstElement.getId(), resultFirstElement.getId());
 
-        verify(commentRepository).findByBookId(bookId, pageable);
+        verify(commentRepository).findByBookId(bookId);
     }
 
     @Test
     void shouldGetCommentsByBookIdMethodReturnEmptyPageWhenBookHasNoComments() {
         String bookId = "testBookId";
-        PageRequest pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updateDate"));
-        Page<Comment> comments = new PageImpl<>(Collections.emptyList());
-        when(commentRepository.findByBookId(bookId, pageable)).thenReturn(comments);
+        when(commentRepository.findByBookId(bookId)).thenReturn(Collections.emptyList());
 
-        Page<CommentJson> result = commentService.getCommentsByBookId(bookId, 0, 5);
+        Page<CommentJson> result = commentService.getCommentsByBookId(bookId, 0);
 
         assertEquals(Page.empty(), result);
 
-        verify(commentRepository).findByBookId(bookId, pageable);
+        verify(commentRepository).findByBookId(bookId);
     }
 
     @ParameterizedTest
@@ -97,14 +90,14 @@ class CommentServiceTest {
     void shouldGetCommentsByBookIdMethodReturnCorrectlyProcessedUsernames(Comment comment, String username) {
         String bookId = "testBookId";
         PageRequest pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updateDate"));
-        Page<Comment> comments = new PageImpl<>(Arrays.asList(comment));
-        when(commentRepository.findByBookId(bookId, pageable)).thenReturn(comments);
+        List<Comment> comments = Arrays.asList(comment);
+        when(commentRepository.findByBookId(bookId)).thenReturn(comments);
 
-        Page<CommentJson> result = commentService.getCommentsByBookId(bookId, 0, 5);
+        Page<CommentJson> result = commentService.getCommentsByBookId(bookId, 0);
 
         assertEquals(username, result.getContent().get(0).getUsernameToDisplay());
 
-        verify(commentRepository).findByBookId(bookId, pageable);
+        verify(commentRepository).findByBookId(bookId);
     }
 
     private static Stream<Arguments> setOfCommentsPagesWithUsernames() {
@@ -127,11 +120,10 @@ class CommentServiceTest {
     @Test
     void shouldGetCommentsByBookIdMethodThrowBookStoreServiceExceptionWhenNonTransientDataAccessExceptionOccur() {
         String bookId = "testBookId";
-        PageRequest pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updateDate"));
-        doThrow(new NonTransientDataAccessException(""){}).when(commentRepository).findByBookId(bookId, pageable);
+        doThrow(new NonTransientDataAccessException(""){}).when(commentRepository).findByBookId(bookId);
 
-        assertThrows(BookStoreServiceException.class, () -> commentService.getCommentsByBookId(bookId, 0, 5));
-        verify(commentRepository).findByBookId(bookId, pageable);
+        assertThrows(BookStoreServiceException.class, () -> commentService.getCommentsByBookId(bookId, 0));
+        verify(commentRepository).findByBookId(bookId);
     }
 
     @Test
@@ -177,12 +169,12 @@ class CommentServiceTest {
         verify(bookRepository).save(book);
     }
 
-    private Page<Comment> generateExampleOfCommentsPage() {
+    private List<Comment> generateExampleOfCommentsPage() {
         Comment comment1 = CommentGenerator.generateCommentWithCommentId("commentId1");
         Comment comment2 = CommentGenerator.generateCommentWithCommentId("commentId2");
         Comment comment3 = CommentGenerator.generateCommentWithCommentId("commentId3");
 
-        return new PageImpl<>(Arrays.asList(comment3, comment2, comment1));
+        return Arrays.asList(comment3, comment2, comment1);
     }
 
 
