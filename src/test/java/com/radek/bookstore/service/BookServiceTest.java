@@ -348,6 +348,30 @@ class BookServiceTest {
         verify(bookRepository).findBookByKeyword(keyword, pageRequest);
     }
 
+    @Test
+    void shouldFindBooksWithPromoMethodReturnPageOfBooks() {
+        Page<Book> booksPage = generateExamplePageOfBooks();
+
+        when(bookRepository.findBooksWithPromo(PageRequest.of(0,5, Sort.by("createdDate").descending()))).thenReturn(booksPage);
+        Page<Book> resultZero = bookService.findBooksWithPromo(0, 5);
+
+        assertEquals(booksPage, resultZero);
+
+        verify(bookRepository).findBooksWithPromo(PageRequest.of(0,5, Sort.by("createdDate").descending()));
+    }
+
+    @Test
+    void shouldFindBooksWithPromoMethodThrowBookstoreServiceExceptionWhenNonTransientDataAccesObjectOccurs() {
+        PageRequest pageRequest = PageRequest.of(0, 5, Sort.by("createdDate").descending());
+        doThrow(new NonTransientDataAccessException(""){})
+                .when(bookRepository).findBooksWithPromo(pageRequest);
+
+        assertThrows(BookStoreServiceException.class,
+                () -> bookService.findBooksWithPromo(0, 5));
+
+        verify(bookRepository).findBooksWithPromo(pageRequest);
+    }
+
     private Page<Book> generateExamplePageOfBooks() {
         Book book1 = BookGenerator.generateBook(LocalDateTime.of(LocalDate.of(2021, 1, 17), LocalTime.now()));
         Book book2 = BookGenerator.generateBook(LocalDateTime.of(LocalDate.of(2021, 1, 12), LocalTime.now()));

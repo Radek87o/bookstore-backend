@@ -125,6 +125,18 @@ public class BookServiceImpl implements BookService {
         }
     }
 
+    @Override
+    public Page<Book> findBooksWithPromo(Integer page, Integer size) {
+        try {
+            PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
+            return bookRepository.findBooksWithPromo(pageRequest);
+        } catch (NonTransientDataAccessException exc) {
+            String message = "An error occurred during attempt to find books with promo.";
+            log.error(message, exc);
+            throw new BookStoreServiceException(message, exc);
+        }
+    }
+
     private boolean isBookAuthorsMatching(Author author, AuthorDto authorDto) {
         boolean firstNameMatching = author.getFirstName().trim().equalsIgnoreCase(authorDto.getFirstName().trim());
         boolean lastNameMatching = author.getLastName().trim().equalsIgnoreCase(authorDto.getLastName().trim());

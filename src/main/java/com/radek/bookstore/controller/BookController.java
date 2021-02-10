@@ -114,4 +114,19 @@ public class BookController {
         Page<Book> bookByKeyword = bookService.findBookByKeyword(keyword, page, size);
         return new ResponseEntity<>(bookByKeyword, headers, HttpStatus.OK);
     }
+
+    @GetMapping(path = "/promos")
+    public ResponseEntity<Page<Book>> findBooksWithPromo(@RequestParam(name = "page", required = false) Integer page,
+                                                         @RequestParam(name = "size", required = false) Integer size) {
+        if(Objects.isNull(page)) {
+            page=0;
+        }
+        if(Objects.isNull(size)) {
+            size=24;
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Page<Book> booksWithPromo = bookService.findBooksWithPromo(page, size);
+        return new ResponseEntity<>(booksWithPromo, headers, HttpStatus.OK);
+    }
 }

@@ -19,4 +19,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
                                         "OR a.first_name LIKE CONCAT ('%',:keyword,'%') OR a.last_name LIKE CONCAT ('%',:keyword,'%') " +
                                         "order by b.created_date DESC")
     Page<Book> findBookByKeyword(@RequestParam("keyword") String keyword, Pageable pageable);
+
+    @Query(value = "SELECT b FROM Book b WHERE b.promoPrice!=null AND b.promoPrice>0")
+    Page<Book> findBooksWithPromo(Pageable pageable);
 }
