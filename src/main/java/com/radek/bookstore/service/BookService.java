@@ -15,4 +15,5 @@ public interface BookService {
     Set<Book> saveBook(BookDto bookDto);
     Optional<Book> findBookByTitle(BookDto bookDto);
     Page<Book> findBookByKeyword(String keyword, Integer pageNumber, Integer pageSize);
+    Page<Book> findBooksWithPromo(Integer page, Integer size);
 }
