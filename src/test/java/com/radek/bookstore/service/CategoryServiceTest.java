@@ -70,15 +70,7 @@ class CategoryServiceTest {
         Category category = new Category(new CategoryDto("Literatura Piękna"));
         category.setId(categoryId);
 
-        Book book1  = new Book(BookGenerator.generateBookDtoWithTitle("Idiota"));
-        Book book2  = new Book(BookGenerator.generateBookDtoWithTitle("Bracia Karamazow"));
-        Book book3  = new Book(BookGenerator.generateBookDtoWithTitle("Zbrodnia i kara"));
-
-        book1.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 2, 1),  LocalTime.now()));
-        book2.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 1, 30),  LocalTime.now()));
-        book3.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 2, 4),  LocalTime.now()));
-
-        category.setBooks(new HashSet<>(Arrays.asList(book1, book2, book3)));
+        category.setBooks(BookGenerator.generateExemplarySetOfBooksWithCreationDate());
 
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
 
@@ -125,7 +117,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void shouldFindByCategoryIdMethodThrowBookStoreServiceExceptionWhenNonTransientDataAccessExceptionOccur() {
+    void shouldFindByCategoryIdMethodThrowBookStoreServiceExceptionWhenNonTransientDataAccessExceptionOccurs() {
         String categoryId = "someCategoryId";
         doThrow(new NonTransientDataAccessException(""){}).when(categoryRepository).findById(categoryId);
 

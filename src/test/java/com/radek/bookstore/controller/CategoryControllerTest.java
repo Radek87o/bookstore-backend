@@ -24,9 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -135,15 +133,8 @@ class CategoryControllerTest {
     }
 
     private CategoryWrapper getTestCategoryWrapper() {
-        Book book1  = new Book(BookGenerator.generateBookDtoWithTitle("Idiota"));
-        Book book2  = new Book(BookGenerator.generateBookDtoWithTitle("Bracia Karamazow"));
-        Book book3  = new Book(BookGenerator.generateBookDtoWithTitle("Zbrodnia i kara"));
-
-        book1.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 2, 1),  LocalTime.now()));
-        book2.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 1, 30),  LocalTime.now()));
-        book3.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 2, 4),  LocalTime.now()));
-
-        Page<Book> books = new PageImpl<>(Arrays.asList(book3, book1, book1));
+        Set<Book> bookSet = BookGenerator.generateExemplarySetOfBooksWithCreationDate();
+        Page<Book> books = new PageImpl<>(new ArrayList<>(bookSet));
 
         return CategoryWrapper.builder()
                 .id("someCategoryId")

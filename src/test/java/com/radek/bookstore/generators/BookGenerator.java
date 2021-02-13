@@ -8,11 +8,10 @@ import com.radek.bookstore.model.dto.BookDto;
 import com.radek.bookstore.model.dto.CategoryDto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.time.LocalTime;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BookGenerator {
@@ -129,6 +128,18 @@ public class BookGenerator {
 
     public static BookDto generateBookDto() {
         return generateStandardBookDto();
+    }
+
+    public static Set<Book> generateExemplarySetOfBooksWithCreationDate() {
+        Book book1  = new Book(BookGenerator.generateBookDtoWithTitle("Idiota"));
+        Book book2  = new Book(BookGenerator.generateBookDtoWithTitle("Bracia Karamazow"));
+        Book book3  = new Book(BookGenerator.generateBookDtoWithTitle("Zbrodnia i kara"));
+
+        book1.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 2, 1),  LocalTime.now()));
+        book2.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 1, 30),  LocalTime.now()));
+        book3.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 2, 4), LocalTime.now()));
+
+        return new HashSet<>(Arrays.asList(book1, book2, book3));
     }
 
     private static BookDto generateStandardBookDto() {
