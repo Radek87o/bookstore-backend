@@ -70,7 +70,7 @@ class CategoryServiceTest {
         Category category = new Category(new CategoryDto("Literatura Piękna"));
         category.setId(categoryId);
 
-        category.setBooks(BookGenerator.generateExemplarySetOfBooksWithCreationDate());
+        category.setBooks(BookGenerator.generateExemplarySetOfBooksWithLastUpdateDate());
 
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
 

@@ -32,8 +32,7 @@ import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -134,7 +133,7 @@ class BookControllerTest {
     void shouldSaveBookMethodReturnCollectionOfAllAuthorBooksWhenBookIsValid() throws Exception {
         BookDto bookDto = BookGenerator.generateBookDto();
         Set<Book> bookSet = Collections.singleton(new Book(bookDto));
-        when(bookService.saveBook(any(BookDto.class))).thenReturn(bookSet);
+        when(bookService.saveBook(any(BookDto.class), any())).thenReturn(bookSet);
 
         String url = "/api/books/";
 
@@ -146,7 +145,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(bookSet)));
 
-        verify(bookService).saveBook(any(BookDto.class));
+        verify(bookService).saveBook(any(BookDto.class), any());
     }
 
     @ParameterizedTest
@@ -160,7 +159,7 @@ class BookControllerTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
 
-        verify(bookService, never()).saveBook(bookDto);
+        verify(bookService, never()).saveBook(bookDto, null);
     }
 
     private static Stream<Arguments> setOfInvalidBookDtos() {
@@ -227,7 +226,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
-        verify(bookService, never()).saveBook(null);
+        verify(bookService, never()).saveBook(null, null);
     }
 
     @ParameterizedTest
@@ -244,7 +243,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
-        verify(bookService, never()).saveBook(bookDto);
+        verify(bookService, never()).saveBook(bookDto, null);
     }
 
     private static Stream<Arguments> setOfInvalidImageUrls() {
@@ -275,7 +274,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
-        verify(bookService, never()).saveBook(bookDto);
+        verify(bookService, never()).saveBook(bookDto, null);
     }
 
     @Test
@@ -299,7 +298,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
-        verify(bookService, never()).saveBook(bookDto);
+        verify(bookService, never()).saveBook(bookDto, null);
     }
 
     @Test
@@ -407,6 +406,230 @@ class BookControllerTest {
                 .andExpect(content().json(mapper.writeValueAsString(books)));
 
         verify(bookService).findBooksWithPromo(0,5);
+    }
+
+    @Test
+    void shouldActivateBookMethodReturnOkStatusWithBook() throws Exception {
+        String bookId = "someBookId";
+        BookDto bookDto = BookGenerator.generateBookDtoWithActiveStatus(true);
+        Book book = new Book(bookDto);
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(bookService.updateBookActivationStatus(bookId, true)).thenReturn(book);
+
+        String url = String.format("/api/books/activation/%s/activate",bookId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(book)));
+
+        verify(bookService).updateBookActivationStatus(bookId, true);
+    }
+
+    @Test
+    void shouldActivateBookMethodReturnNotFoundStatusWhenBookNotExists() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(false);
+        String message = String.format("Book with id: {} does not exists", bookId);
+
+        String url = String.format("/api/books/activation/%s/activate",bookId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().string(message));
+
+        verify(bookService).existsByBookId(bookId);
+    }
+
+    @Test
+    void shouldDeactivateBookMethodReturnOkStatusWithBook() throws Exception {
+        String bookId = "someBookId";
+        BookDto bookDto = BookGenerator.generateBookDtoWithActiveStatus(false);
+        Book book = new Book(bookDto);
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(bookService.updateBookActivationStatus(bookId, false)).thenReturn(book);
+
+        String url = String.format("/api/books/activation/%s/deactivate",bookId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(book)));
+
+        verify(bookService).updateBookActivationStatus(bookId, false);
+    }
+
+    @Test
+    void shouldDeactivateBookMethodReturnNotFoundStatusWhenBookNotExists() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(false);
+        String message = String.format("Book with id: {} does not exists", bookId);
+
+        String url = String.format("/api/books/activation/%s/deactivate",bookId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().string(message));
+
+        verify(bookService).existsByBookId(bookId);
+    }
+
+    @Test
+    void shouldUpdateBookMethodReturnCollectionsOfBookWithOkStatusWhenBookIsValid() throws Exception {
+        String bookId = "someBookId";
+        BookDto bookDto = BookGenerator.generateBookDto();
+        Set<Book> bookSet = Collections.singleton(new Book(bookDto));
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(bookService.saveBook(any(BookDto.class), anyString())).thenReturn(bookSet);
+
+        String url = "/api/books/"+bookId;
+
+        mockMvc.perform(put(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(bookDto))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(bookSet)));
+
+        verify(bookService).existsByBookId(bookId);
+        verify(bookService).saveBook(any(BookDto.class), anyString());
+    }
+
+    @Test
+    void shouldUpdateBookMethodReturnBadRequestStatusWhenBookWithGivenBookIdNotExists() throws Exception {
+        String bookId = "someBookId";
+        BookDto bookDto = BookGenerator.generateBookDto();
+        when(bookService.existsByBookId(bookId)).thenReturn(false);
+
+        String message = String.format("Attempt to update non existing book with id: %s", bookId);
+
+        String url = "/api/books/"+bookId;
+
+        mockMvc.perform(put(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(bookDto))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().string(message));
+
+        verify(bookService).existsByBookId(bookId);
+    }
+
+    @Test
+    void shouldUpdateBookMethodReturnBadRequestStatusWhenPassedBookDtoIsNull() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+
+        String url = "/api/books/"+bookId;
+        String message = "Book cannot be null";
+
+        mockMvc.perform(put(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(null))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().string(message));
+
+        verify(bookService, never()).saveBook(null, bookId);
+    }
+
+    @ParameterizedTest
+    @MethodSource("setOfInvalidImageUrls")
+    void shouldUpdateBookMethodReturnBadRequestWhenPassedBookImageUrlIsInvalid(String invalidUrl, BookDto bookDto) throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+
+        String url = "/api/books/"+bookId;
+        String message = String.format("Incorrect format of image url: %s", invalidUrl);;
+
+        mockMvc.perform(put(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(bookDto))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().string(message));
+
+        verify(bookService, never()).saveBook(bookDto, bookId);
+    }
+
+    @Test
+    void shouldUpdateBookMethodReturnBadRequestWhenPromoPriceIsGreaterThanBasePrice() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+
+        String url = "/api/books/"+bookId;
+        String message = "Promo price cannot be greater than base price";
+        BookDto bookDto = BookGenerator.generateBookDtoWithBasePriceAndPromoPrice(BigDecimal.valueOf(23.50), BigDecimal.valueOf(24L));
+
+        mockMvc.perform(put(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(bookDto))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().string(message));
+
+        verify(bookService, never()).saveBook(bookDto, bookId);
+    }
+
+    @ParameterizedTest
+    @MethodSource("setOfInvalidBookDtos")
+    void shouldUpdateBookMethodReturnBadRequestWhenBookDtoIsInvalid(BookDto bookDto) throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+
+        String url = "/api/books/"+bookId;
+
+        mockMvc.perform(put(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(bookDto))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        verify(bookService, never()).saveBook(bookDto, bookId);
+    }
+
+    @Test
+    void shouldDeleteBookMethodRemoveBookWithStatusNoContent() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        doNothing().when(bookService).deleteBookById(bookId);
+
+        String url = "/api/books/"+bookId;
+
+        mockMvc.perform(delete(url)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(bookService).existsByBookId(bookId);
+        verify(bookService).deleteBookById(bookId);
+    }
+
+    @Test
+    void shouldDeleteBookMethodReturnStatusNotFoundWhenBookNotExists() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(false);
+
+        String message = String.format("Attempt to remove non existing book with id: %s", bookId);
+
+        String url = "/api/books/"+bookId;
+
+        mockMvc.perform(delete(url)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(message));
+
+        verify(bookService).existsByBookId(bookId);
     }
 
     private Page<Book> getTestBooksCollection() {

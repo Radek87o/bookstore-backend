@@ -46,7 +46,7 @@ public class CategoryServiceImpl implements CategoryService {
             Category category = categoryRepository.findById(categoryId).get();
             Set<Book> categoriesBooks = Objects.isNull(category.getBooks()) ? new HashSet<>() : category.getBooks();
             List<Book> booksList = categoriesBooks.stream()
-                    .sorted(Comparator.comparing(Book::getCreatedDate).reversed())
+                    .sorted(Comparator.comparing(Book::getLastUpdateDate).reversed())
                     .collect(Collectors.toList());
             PagedListHolder<Book> listHolder = new PagedListHolder<>(booksList);
             listHolder.setPage(page);

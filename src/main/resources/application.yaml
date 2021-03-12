@@ -9,6 +9,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+        event:
+          merge:
+            entity_copy_observer: allow
     hibernate:
       ddl-auto: update
 

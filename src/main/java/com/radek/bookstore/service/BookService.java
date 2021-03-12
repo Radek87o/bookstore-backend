@@ -12,8 +12,10 @@ public interface BookService {
     Page<Book> listAllBooks(Integer pageNumber, Integer pageSize);
     Optional<BookJson> findBook(String id);
     boolean existsByBookId(String id);
-    Set<Book> saveBook(BookDto bookDto);
+    Set<Book> saveBook(BookDto bookDto, String bookId);
     Optional<Book> findBookByTitle(BookDto bookDto);
     Page<Book> findBookByKeyword(String keyword, Integer pageNumber, Integer pageSize);
     Page<Book> findBooksWithPromo(Integer page, Integer size);
+    Book updateBookActivationStatus(String bookId, boolean activationStatus);
+    void deleteBookById(String bookId);
 }

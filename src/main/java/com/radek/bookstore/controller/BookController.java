@@ -1,5 +1,6 @@
 package com.radek.bookstore.controller;
 
+import ch.qos.logback.core.joran.conditional.ThenAction;
 import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.dto.BookDto;
 import com.radek.bookstore.model.json.BookJson;
@@ -84,7 +85,7 @@ public class BookController {
             return new ResponseEntity<>(message, headers, HttpStatus.BAD_REQUEST);
         }
         Optional<Book> bookByTitle = bookService.findBookByTitle(bookToSave);
-        if(!bookByTitle.isEmpty()) {
+        if(bookByTitle.isPresent()) {
             String message = String.format("Book with title %s and author name: %s %s already exists",
                     bookToSave.getTitle(), bookToSave.getAuthor().getFirstName(), bookToSave.getAuthor().getLastName());
             log.info(message);
@@ -92,7 +93,7 @@ public class BookController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             return new ResponseEntity<>(message, headers, HttpStatus.BAD_REQUEST);
         }
-        Collection<Book> books = bookService.saveBook(bookToSave);
+        Collection<Book> books = bookService.saveBook(bookToSave, null);
         log.info("Book with title {} successfully saved", bookToSave.getTitle());
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -115,7 +116,7 @@ public class BookController {
         return new ResponseEntity<>(bookByKeyword, headers, HttpStatus.OK);
     }
 
-    @GetMapping(path = "/promos")
+    @GetMapping(path = "/promos", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Page<Book>> findBooksWithPromo(@RequestParam(name = "page", required = false) Integer page,
                                                          @RequestParam(name = "size", required = false) Integer size) {
         if(Objects.isNull(page)) {
@@ -129,4 +130,76 @@ public class BookController {
         Page<Book> booksWithPromo = bookService.findBooksWithPromo(page, size);
         return new ResponseEntity<>(booksWithPromo, headers, HttpStatus.OK);
     }
+
+    @GetMapping(path = "/activation/{bookId}/deactivate", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> deactivateBook(@PathVariable("bookId") String bookId) {
+        return updateBookActivationStatus(bookId, false);
+    }
+
+    @GetMapping(path = "/activation/{bookId}/activate", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> activateBook(@PathVariable("bookId") String bookId) {
+        return updateBookActivationStatus(bookId, true);
+    }
+
+    @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateBook(@PathVariable("id") String bookId, @Valid @RequestBody(required = false) BookDto bookToUpdate) {
+        if(!bookService.existsByBookId(bookId)) {
+            String message = String.format("Attempt to update non existing book with id: %s", bookId);
+            log.info(message);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            return new ResponseEntity<>(message, headers, HttpStatus.NOT_FOUND);
+        }
+        if(Objects.isNull(bookToUpdate)) {
+            String message = "Book cannot be null";
+            log.info(message);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            return new ResponseEntity<>(message, headers, HttpStatus.BAD_REQUEST);
+        }
+        if(!UrlCustomValidator.urlValidator(bookToUpdate.getImageUrl())){
+            String message = String.format("Incorrect format of image url: %s", bookToUpdate.getImageUrl());
+            log.info(message);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            return new ResponseEntity<>(message, headers, HttpStatus.BAD_REQUEST);
+        }
+        if(Objects.nonNull(bookToUpdate.getPromoPrice()) && bookToUpdate.getPromoPrice().compareTo(bookToUpdate.getBasePrice())>0) {
+            String message = "Promo price cannot be greater than base price";
+            log.info(message);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            return new ResponseEntity<>(message, headers, HttpStatus.BAD_REQUEST);
+        }
+        Collection<Book> books = bookService.saveBook(bookToUpdate, bookId);
+        log.info("Book with title {} successfully updated", bookToUpdate.getTitle());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return new ResponseEntity<>(books, headers, HttpStatus.OK);
+    }
+
+    @DeleteMapping(path = "/{id}")
+    public ResponseEntity<?> deleteBook(@PathVariable("id") String bookId) {
+        if(!bookService.existsByBookId(bookId)) {
+            String message = String.format("Attempt to remove non existing book with id: %s", bookId);
+            log.info(message);
+            return new ResponseEntity<>(message, HttpStatus.NOT_FOUND);
+        }
+        bookService.deleteBookById(bookId);
+        log.info("Successfully deleted book with id: {}", bookId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    private ResponseEntity<?> updateBookActivationStatus(String bookId, boolean activationStatus) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if(!bookService.existsByBookId(bookId)) {
+            String message = String.format("Book with id: {} does not exists", bookId);
+            log.info(message);
+            return new ResponseEntity<>(message, headers, HttpStatus.NOT_FOUND);
+        }
+        Book book = bookService.updateBookActivationStatus(bookId, activationStatus);
+        return new ResponseEntity<>(book, headers, HttpStatus.OK);
+    }
+
 }

@@ -2,6 +2,7 @@ package com.radek.bookstore.repository;
 
 import com.radek.bookstore.model.Rating;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,4 +18,9 @@ public interface RatingRepository extends JpaRepository<Rating, String> {
     @Transactional
     @Query(nativeQuery = true, value = "SELECT * FROM rating r WHERE r.book_id=:bookId AND r.user_id=:userId")
     Optional<Rating> findByBookIdAndUserId(@Param("bookId") String bookId, @Param("userId") String userId);
+
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = "DELETE FROM rating r WHERE r.book_id=:bookId")
+    void deleteByBookId(@Param("bookId") String bookId);
 }

@@ -119,6 +119,10 @@ public class BookGenerator {
         return generateStandardBookDtoBuilder().categories(categories).build();
     }
 
+    public static BookDto generateBookDtoWithActiveStatus(boolean activeStatus) {
+        return generateStandardBookDtoBuilder().active(activeStatus).build();
+    }
+
     public static BookDto generateBookDtoWithBasePriceAndPromoPrice(BigDecimal basePrice, BigDecimal promoPrice) {
         return generateStandardBookDtoBuilder()
                 .basePrice(basePrice)
@@ -130,14 +134,14 @@ public class BookGenerator {
         return generateStandardBookDto();
     }
 
-    public static Set<Book> generateExemplarySetOfBooksWithCreationDate() {
+    public static Set<Book> generateExemplarySetOfBooksWithLastUpdateDate() {
         Book book1  = new Book(BookGenerator.generateBookDtoWithTitle("Idiota"));
         Book book2  = new Book(BookGenerator.generateBookDtoWithTitle("Bracia Karamazow"));
         Book book3  = new Book(BookGenerator.generateBookDtoWithTitle("Zbrodnia i kara"));
 
-        book1.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 2, 1),  LocalTime.now()));
-        book2.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 1, 30),  LocalTime.now()));
-        book3.setCreatedDate(LocalDateTime.of(LocalDate.of(2021, 2, 4), LocalTime.now()));
+        book1.setLastUpdateDate(LocalDateTime.of(LocalDate.of(2021, 2, 1),  LocalTime.now()));
+        book2.setLastUpdateDate(LocalDateTime.of(LocalDate.of(2021, 1, 30),  LocalTime.now()));
+        book3.setLastUpdateDate(LocalDateTime.of(LocalDate.of(2021, 2, 4), LocalTime.now()));
 
         return new HashSet<>(Arrays.asList(book1, book2, book3));
     }
@@ -165,7 +169,7 @@ public class BookGenerator {
         author.setId(generateRandomId());
         book.setAuthor(author);
         book.setId(bookId);
-        book.setCreatedDate(createdTimestamp);
+        book.setLastUpdateDate(createdTimestamp);
         return book;
     }
 

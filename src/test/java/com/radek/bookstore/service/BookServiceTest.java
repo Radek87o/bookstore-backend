@@ -12,6 +12,7 @@ import com.radek.bookstore.model.json.BookJson;
 import com.radek.bookstore.model.mapper.BookJsonMapper;
 import com.radek.bookstore.repository.AuthorRepository;
 import com.radek.bookstore.repository.BookRepository;
+import com.radek.bookstore.repository.RatingRepository;
 import com.radek.bookstore.service.impl.BookServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,30 +46,33 @@ class BookServiceTest {
     @Mock
     AuthorRepository authorRepository;
 
+    @Mock
+    RatingRepository ratingRepository;
+
     BookJsonMapper bookJsonMapper = new BookJsonMapper();
 
     BookService bookService;
 
     @BeforeEach
     void setup(){
-        bookService = new BookServiceImpl(bookRepository, authorRepository, bookJsonMapper);
+        bookService = new BookServiceImpl(bookRepository, authorRepository, ratingRepository, bookJsonMapper);
     }
 
     @Test
     void shouldListAllBooks() {
         Page<Book> booksPage = generateExamplePageOfBooks();
 
-        when(bookRepository.findAll(PageRequest.of(0,5, Sort.by("createdDate").descending()))).thenReturn(booksPage);
+        when(bookRepository.findAll(PageRequest.of(0,5, Sort.by("lastUpdateDate").descending()))).thenReturn(booksPage);
         Page<Book> resultZero = bookService.listAllBooks(0, 5);
 
         assertEquals(booksPage, resultZero);
 
-        verify(bookRepository).findAll(PageRequest.of(0,5, Sort.by("createdDate").descending()));
+        verify(bookRepository).findAll(PageRequest.of(0,5, Sort.by("lastUpdateDate").descending()));
     }
 
     @Test
     void shouldListAllBooksMethodThrowBookStoreServiceExceptionWhenNonTransientDataAccessExceptionOccur(){
-        PageRequest pageRequest = PageRequest.of(0, 5, Sort.by("createdDate").descending());
+        PageRequest pageRequest = PageRequest.of(0, 5, Sort.by("lastUpdateDate").descending());
         doThrow(new NonTransientDataAccessException(""){}).when(bookRepository).findAll(pageRequest);
 
         assertThrows(BookStoreServiceException.class, () -> bookService.listAllBooks(0, 5));
@@ -181,7 +185,7 @@ class BookServiceTest {
         author.addBook(book);
         lenient().when(authorRepository.save(any(Author.class))).thenReturn(author);
 
-        Set<Book> result = bookService.saveBook(bookDto);
+        Set<Book> result = bookService.saveBook(bookDto, null);
 
         Book expectedBook = author.getBooks().iterator().next();
         Book returnedBook = result.iterator().next();
@@ -204,7 +208,7 @@ class BookServiceTest {
         author.addBook(newBook);
         lenient().when(authorRepository.save(any(Author.class))).thenReturn(author);
 
-        Set<Book> result = bookService.saveBook(bookDto);
+        Set<Book> result = bookService.saveBook(bookDto, null);
 
         assertEquals(author.getBooks().size(), result.size());
         verify(authorRepository).save(any(Author.class));
@@ -221,7 +225,7 @@ class BookServiceTest {
         author.addBook(book);
         lenient().when(authorRepository.save(any(Author.class))).thenReturn(author);
 
-        Set<Book> result = bookService.saveBook(bookDto);
+        Set<Book> result = bookService.saveBook(bookDto, null);
         Book resultBook = result.iterator().next();
 
         assertEquals(expectedCategories, resultBook.getCategories());
@@ -248,7 +252,7 @@ class BookServiceTest {
 
         doThrow(new NonTransientDataAccessException(""){}).when(authorRepository).save(any(Author.class));
 
-        assertThrows(BookStoreServiceException.class, () -> bookService.saveBook(bookDto));
+        assertThrows(BookStoreServiceException.class, () -> bookService.saveBook(bookDto, null));
 
         verify(authorRepository).save(any(Author.class));
     }
@@ -352,17 +356,17 @@ class BookServiceTest {
     void shouldFindBooksWithPromoMethodReturnPageOfBooks() {
         Page<Book> booksPage = generateExamplePageOfBooks();
 
-        when(bookRepository.findBooksWithPromo(PageRequest.of(0,5, Sort.by("createdDate").descending()))).thenReturn(booksPage);
+        when(bookRepository.findBooksWithPromo(PageRequest.of(0,5, Sort.by("lastUpdateDate").descending()))).thenReturn(booksPage);
         Page<Book> resultZero = bookService.findBooksWithPromo(0, 5);
 
         assertEquals(booksPage, resultZero);
 
-        verify(bookRepository).findBooksWithPromo(PageRequest.of(0,5, Sort.by("createdDate").descending()));
+        verify(bookRepository).findBooksWithPromo(PageRequest.of(0,5, Sort.by("lastUpdateDate").descending()));
     }
 
     @Test
     void shouldFindBooksWithPromoMethodThrowBookstoreServiceExceptionWhenNonTransientDataAccesObjectOccurs() {
-        PageRequest pageRequest = PageRequest.of(0, 5, Sort.by("createdDate").descending());
+        PageRequest pageRequest = PageRequest.of(0, 5, Sort.by("lastUpdateDate").descending());
         doThrow(new NonTransientDataAccessException(""){})
                 .when(bookRepository).findBooksWithPromo(pageRequest);
 
@@ -370,6 +374,76 @@ class BookServiceTest {
                 () -> bookService.findBooksWithPromo(0, 5));
 
         verify(bookRepository).findBooksWithPromo(pageRequest);
+    }
+
+    @ParameterizedTest
+    @MethodSource("activationStatuses")
+    void shouldUpdateBookActivationStatusMethodReturnBook(boolean activationStatus) {
+        String bookId = "someBookId";
+        BookDto bookDto = BookGenerator.generateBookDtoWithActiveStatus(!activationStatus);
+        Book bookToReturn = new Book(bookDto);
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(bookToReturn));
+
+        bookToReturn.setId(bookId);
+        when(bookRepository.save(bookToReturn)).thenReturn(bookToReturn);
+
+        Book result = bookService.updateBookActivationStatus(bookId, activationStatus);
+
+        assertEquals(bookToReturn.getId(), result.getId());
+        assertEquals(bookToReturn.getTitle(), result.getTitle());
+        assertEquals(bookToReturn.getDescription(), result.getDescription());
+        assertEquals(bookToReturn.getIssueYear(), result.getIssueYear());
+        assertEquals(activationStatus, result.getActive());
+
+        verify(bookRepository).findById(bookId);
+    }
+
+    private static Stream<Arguments> activationStatuses() {
+        return Stream.of(
+                Arguments.of(true),
+                Arguments.of(false)
+        );
+    }
+
+    @Test
+    void shouldUpdateBookActivationStatusMethodThrowBookstoreServiceExceptionWhenNonTransientDataAccessObjectOccur(){
+        String bookId = "someBookId";
+        BookDto bookDto = BookGenerator.generateBookDtoWithActiveStatus(false);
+        Book bookToReturn = new Book(bookDto);
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(bookToReturn));
+
+        doThrow(new NonTransientDataAccessException(""){})
+                .when(bookRepository).save(any(Book.class));
+
+        assertThrows(BookStoreServiceException.class,
+                () -> bookService.updateBookActivationStatus(bookId, true));
+
+        verify(bookRepository).save(any(Book.class));
+    }
+
+    @Test
+    void shouldDeleteBook() {
+        String bookId = "someBookId";
+        doNothing().when(ratingRepository).deleteByBookId(bookId);
+        doNothing().when(bookRepository).deleteById(bookId);
+
+        bookService.deleteBookById(bookId);
+
+        verify(ratingRepository).deleteByBookId(bookId);
+        verify(bookRepository).deleteById(bookId);
+    }
+
+    @Test
+    void shouldDeleteBookMethodThrowBookstoreServiceExceptionWhenNonTransientDataAccessObjectOccur() {
+        String bookId = "someBookId";
+        doNothing().when(ratingRepository).deleteByBookId(bookId);
+
+        doThrow(new NonTransientDataAccessException(""){})
+                .when(bookRepository).deleteById(bookId);
+
+        assertThrows(BookStoreServiceException.class, ()-> bookService.deleteBookById(bookId));
+
+        verify(bookRepository).deleteById(bookId);
     }
 
     private Page<Book> generateExamplePageOfBooks() {

@@ -48,7 +48,7 @@ class AuthorServiceTest {
                 .build());
         author.setId(authorId);
 
-        author.setBooks(BookGenerator.generateExemplarySetOfBooksWithCreationDate());
+        author.setBooks(BookGenerator.generateExemplarySetOfBooksWithLastUpdateDate());
 
         when(authorRepository.findById(authorId)).thenReturn(Optional.of(author));
 

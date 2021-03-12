@@ -35,7 +35,7 @@ public class AuthorServiceImpl implements AuthorService {
             Author author = authorRepository.findById(id).get();
             Set<Book> authorBooks = Objects.isNull(author.getBooks()) ? new HashSet<>() : author.getBooks();
             List<Book> booksList = authorBooks.stream()
-                    .sorted(Comparator.comparing(Book::getCreatedDate).reversed())
+                    .sorted(Comparator.comparing(Book::getLastUpdateDate).reversed())
                     .collect(Collectors.toList());
             PagedListHolder pagedListHolder = new PagedListHolder(booksList);
             pagedListHolder.setPage(page);

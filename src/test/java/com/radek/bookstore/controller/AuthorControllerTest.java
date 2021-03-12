@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.ArrayList;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -95,7 +94,7 @@ class AuthorControllerTest {
     }
 
     private AuthorWrapper generateAuthorWrapper() {
-        Set<Book> books = BookGenerator.generateExemplarySetOfBooksWithCreationDate();
+        Set<Book> books = BookGenerator.generateExemplarySetOfBooksWithLastUpdateDate();
         Page<Book> booksPage = new PageImpl<>(new ArrayList<>(books));
 
         return AuthorWrapper.builder()
