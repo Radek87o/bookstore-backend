@@ -1,11 +1,10 @@
 package com.radek.bookstore.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.radek.bookstore.generators.RatingGenerator;
 import com.radek.bookstore.model.Rating;
-import com.radek.bookstore.model.dto.BookDto;
 import com.radek.bookstore.model.dto.RatingDto;
+import com.radek.bookstore.model.exception.BookStoreServiceException;
 import com.radek.bookstore.service.BookService;
 import com.radek.bookstore.service.RatingService;
 import com.radek.bookstore.service.UserService;
@@ -92,6 +91,25 @@ class RatingControllerTest {
     }
 
     @Test
+    void shouldGetBooksRatingMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId = "someBookId";
+
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(ratingService.getBookRatings(bookId))
+                .thenThrow(new BookStoreServiceException("An error occurred during retrieving book ratings"));
+
+        String url = String.format("/api/ratings/%s", bookId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(bookService).existsByBookId(bookId);
+        verify(ratingService).getBookRatings(bookId);
+    }
+
+    @Test
     void shouldGetSingleRatingMethodReturnCurrentUserRatingWhenUserAlreadyRatedGivenBook() throws Exception {
         String bookId = "testBookId";
         String userId = "testUserId";
@@ -168,6 +186,28 @@ class RatingControllerTest {
                 .andExpect(content().string(message));
 
         verify(userService).existByUserId(userId);
+    }
+
+    @Test
+    void shouldGetSingleRatingMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId = "testBookId";
+        String userId = "testUserId";
+
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(userService.existByUserId(userId)).thenReturn(true);
+        when(ratingService.getBookRating(bookId, userId))
+                .thenThrow(new BookStoreServiceException("An error occurred during retrieving single book rating"));
+
+        String url = String.format("/api/ratings/%s/user/%s", bookId, userId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
+        verify(ratingService).getBookRating(bookId, userId);
     }
 
     @Test
@@ -289,6 +329,31 @@ class RatingControllerTest {
                 Arguments.of(new RatingDto(-1)),
                 Arguments.of(new RatingDto(6))
         );
+    }
+
+    @Test
+    void shouldSaveRatingMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId = "testBookId";
+        String userId = "testUserId";
+        RatingDto ratingDto = new RatingDto(3);
+
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(userService.existByUserId(userId)).thenReturn(true);
+        when(ratingService.saveRating(any(RatingDto.class), anyString(), anyString()))
+                .thenThrow(new BookStoreServiceException("An error occurred during saving book rating"));
+
+        String url = String.format("/api/ratings/%s/user/%s", bookId, userId);
+
+        mockMvc.perform(post(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(ratingDto))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());;
+
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
+        verify(ratingService).saveRating(any(RatingDto.class), anyString(), anyString());
     }
 
     private List<Rating> getListOfTestBookRatings() {

@@ -5,6 +5,7 @@ import com.radek.bookstore.generators.BookGenerator;
 import com.radek.bookstore.generators.CommentGenerator;
 import com.radek.bookstore.model.Comment;
 import com.radek.bookstore.model.dto.CommentDto;
+import com.radek.bookstore.model.exception.BookStoreServiceException;
 import com.radek.bookstore.model.json.CommentJson;
 import com.radek.bookstore.service.BookService;
 import com.radek.bookstore.service.CommentService;
@@ -111,6 +112,24 @@ class CommentControllerTest {
     }
 
     @Test
+    void shouldGetCommentsByBookIdMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId="someBookId";
+        String url = String.format("/api/comments/%s", bookId);
+
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(commentService.getCommentsByBookId(bookId, 0))
+                .thenThrow(new BookStoreServiceException("An error occurred during retrieving comments by bookId"));
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).existsByBookId(bookId);
+        verify(commentService).getCommentsByBookId(bookId, 0);
+    }
+
+    @Test
     void shouldSaveCommentMethodReturnAllBookCommentsWhenBookAndUserExists() throws Exception {
         String bookId="testBookId";
         String userId = "testUserId";
@@ -201,6 +220,31 @@ class CommentControllerTest {
                 Arguments.of(new CommentDto("ab")),
                 Arguments.of(new CommentDto(BookGenerator.FIVE_PARAGRAPH_DESCRIPTION))
         );
+    }
+
+    @Test
+    void shouldSaveCommentMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId="testBookId";
+        String userId = "testUserId";
+        CommentDto commentDto = new CommentDto("Some Content");
+
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(userService.existByUserId(userId)).thenReturn(true);
+        when(commentService.saveComment(any(CommentDto.class), anyString(), anyString()))
+                .thenThrow(new BookStoreServiceException("An error occurred during attempt to save comment to database"));
+
+
+        String url = String.format("/api/comments/%s/user/%s", bookId, userId);
+
+        mockMvc.perform(post(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(commentDto)))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
+        verify(commentService).saveComment(any(CommentDto.class), anyString(), anyString());
     }
 
     private Page<CommentJson> getPageOfTestCommentsJson() {
