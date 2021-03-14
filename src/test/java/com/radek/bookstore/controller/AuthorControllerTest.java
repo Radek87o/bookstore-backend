@@ -3,6 +3,7 @@ package com.radek.bookstore.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.radek.bookstore.generators.BookGenerator;
 import com.radek.bookstore.model.Book;
+import com.radek.bookstore.model.exception.BookStoreServiceException;
 import com.radek.bookstore.model.json.AuthorWrapper;
 import com.radek.bookstore.service.AuthorService;
 import org.junit.jupiter.api.Test;
@@ -91,6 +92,23 @@ class AuthorControllerTest {
 
         verify(authorService).existByAuthorId(authorWrapper.getId());
         verify(authorService, never()).findByAuthorId(authorWrapper.getId(), 0, 24);
+    }
+
+    @Test
+    void shouldFindAuthorByIdMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String authorId = "someAuthorId";
+        when(authorService.existByAuthorId(authorId)).thenReturn(true);
+        when(authorService.findByAuthorId(authorId, 0, 24)).thenThrow(new BookStoreServiceException("An error occurred during retrieving author by id"));
+
+        String url="/api/authors/"+authorId;
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(authorService).existByAuthorId(authorId);
+        verify(authorService).findByAuthorId(authorId, 0, 24);
     }
 
     private AuthorWrapper generateAuthorWrapper() {

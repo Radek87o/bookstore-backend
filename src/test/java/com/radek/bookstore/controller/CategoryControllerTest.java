@@ -5,6 +5,7 @@ import com.radek.bookstore.generators.BookGenerator;
 import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.Category;
 import com.radek.bookstore.model.dto.CategoryDto;
+import com.radek.bookstore.model.exception.BookStoreServiceException;
 import com.radek.bookstore.model.json.CategoryWrapper;
 import com.radek.bookstore.service.CategoryService;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,20 @@ class CategoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(categories)));
+
+        verify(categoryService).getAllCategories();
+    }
+
+    @Test
+    void shouldGetAllCategoriesMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        when(categoryService.getAllCategories()).thenThrow(new BookStoreServiceException("An error occurred during retrieving categories from db"));
+
+        String url = "/api/category";
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
 
         verify(categoryService).getAllCategories();
     }
@@ -114,6 +129,24 @@ class CategoryControllerTest {
                 .andExpect(content().string(message));
 
         verify(categoryService).existByCategoryId(categoryId);
+    }
+
+    @Test
+    void shouldGetCategoryByIdMethodReturnReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String categoryId = "someCategoryId";
+        when(categoryService.existByCategoryId(categoryId)).thenReturn(true);
+        when(categoryService.findByCategoryId(categoryId, 0, 24))
+                .thenThrow(new BookStoreServiceException("An error occurred during retrieving category by id"));
+
+        String url = String.format("/api/category/%s", categoryId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(categoryService).existByCategoryId(categoryId);
+        verify(categoryService).findByCategoryId(categoryId, 0, 24);
     }
 
     private List<Category> getTestListOfCategories() {

@@ -9,8 +9,6 @@ import com.radek.bookstore.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,35 +40,28 @@ public class CommentController {
         if(!bookService.existsByBookId(bookId)){
             String message = String.format("Cannot find book with id: %s", bookId);
             log.info(message);
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-            return new ResponseEntity<>(message, responseHeaders, HttpStatus.BAD_REQUEST);
+            return ResponseHelper.createBadRequestResponse(message);
         }
         pageNumber = Objects.isNull(pageNumber) ? 0 : pageNumber;
         Page<CommentJson> bookComments = commentService.getCommentsByBookId(bookId, pageNumber);
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-        return new ResponseEntity<>(bookComments, responseHeaders, HttpStatus.OK);
+        return ResponseHelper.createOkResponse(bookComments);
     }
 
-    @PostMapping(path = "/{bookId}/user/{userId}")
+    @PostMapping(path = "/{bookId}/user/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> saveComment(@Valid @RequestBody CommentDto commentDto,
                                                @PathVariable("bookId") String bookId,
                                                @PathVariable("userId") String userId){
         if(!bookService.existsByBookId(bookId)) {
-            return determineErrorResponseException(String.format("Book with id: %s cannot be found", bookId), HttpStatus.NOT_FOUND);
+            String message = String.format("Book with id: %s cannot be found", bookId);
+            log.info(message);
+            return ResponseHelper.createNotFoundResponse(message);
         }
         else if(!userService.existByUserId(userId)){
-            return determineErrorResponseException(String.format("User with id: %s cannot be found", userId), HttpStatus.NOT_FOUND);
+            String message = String.format("User with id: %s cannot be found", userId);
+            log.info(message);
+            return ResponseHelper.createNotFoundResponse(message);
         }
         Collection<Comment> comments = commentService.saveComment(commentDto, bookId, userId);
-        return new ResponseEntity<>(comments, HttpStatus.CREATED);
-    }
-
-    private ResponseEntity<String> determineErrorResponseException(String message, HttpStatus httpStatus) {
-        log.info(message);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return new ResponseEntity<>(message, headers, httpStatus);
+        return ResponseHelper.createCreatedResponse(comments);
     }
 }

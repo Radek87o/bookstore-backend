@@ -6,6 +6,7 @@ import com.radek.bookstore.model.Author;
 import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.dto.AuthorDto;
 import com.radek.bookstore.model.dto.BookDto;
+import com.radek.bookstore.model.exception.BookStoreServiceException;
 import com.radek.bookstore.model.json.BookJson;
 import com.radek.bookstore.model.mapper.BookJsonMapper;
 import com.radek.bookstore.service.BookService;
@@ -89,6 +90,20 @@ class BookControllerTest {
     }
 
     @Test
+    void shouldGetBooksPageMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        when(bookService.listAllBooks(0,24)).thenThrow(new BookStoreServiceException("An error occurred during retrieving page of books."));
+
+        String url = "/api/books";
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).listAllBooks(0,24);
+    }
+
+    @Test
     void shouldGetBookMethodReturnBookWhenDbContainsBookWithPassedId() throws Exception {
         String bookId = "test_existing-book";
         Book searchedBook = BookGenerator.generateBookWithId(LocalDateTime.now(), bookId);
@@ -127,6 +142,21 @@ class BookControllerTest {
                 Arguments.of("null"),
                 Arguments.of("nonExistingId")
         );
+    }
+
+    @Test
+    void shouldGetBookMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId = "test_existing-book";
+        when(bookService.findBook(bookId)).thenThrow(new BookStoreServiceException("An error occurred during retrieving book by id."));
+
+        String url = String.format("/api/books/%s", bookId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).findBook(bookId);
     }
 
     @Test
@@ -302,6 +332,25 @@ class BookControllerTest {
     }
 
     @Test
+    void shouldSaveBookMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        BookDto bookDto = BookGenerator.generateBookDto();
+        when(bookService.findBookByTitle(any(BookDto.class))).thenReturn(Optional.empty());
+        when(bookService.saveBook(any(BookDto.class), any())).thenThrow(new BookStoreServiceException("An error occurred during saving book to database."));
+
+        String url = "/api/books";
+
+        mockMvc.perform(post(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(bookDto))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).findBookByTitle(any(BookDto.class));
+        verify(bookService).saveBook(any(BookDto.class), any());
+    }
+
+    @Test
     void shouldSearchBookByKeywordMethodReturnOkStatusWithNonEmptyPageOfBooksWhenNonNullKeywordPassed() throws Exception {
         Page<Book> books = getTestBooksCollection();
         String keyword = "someKeyword";
@@ -373,6 +422,21 @@ class BookControllerTest {
     }
 
     @Test
+    void shouldSearchBookByKeywordMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String keyword = "someKeyword";
+        when(bookService.findBookByKeyword(keyword, 0, 24)).thenThrow(new BookStoreServiceException("An error occurred during attempt to find book by keyword."));
+        String url = "/api/books/search";
+
+        mockMvc.perform(get(url)
+                .param("keyword", keyword)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).findBookByKeyword(keyword, 0, 24);
+    }
+
+    @Test
     void shouldFindBooksWithPromoMethodReturnPageOfBooksWhenParamsNotPassed() throws Exception {
         Page<Book> books = getTestBooksCollection();
 
@@ -406,6 +470,20 @@ class BookControllerTest {
                 .andExpect(content().json(mapper.writeValueAsString(books)));
 
         verify(bookService).findBooksWithPromo(0,5);
+    }
+
+    @Test
+    void shouldFindBooksWithPromoMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        when(bookService.findBooksWithPromo(0,24)).thenThrow(new BookStoreServiceException("An error occurred during attempt to find books with promo."));
+
+        String url = "/api/books/promos";
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).findBooksWithPromo(0, 24);
     }
 
     @Test
@@ -445,6 +523,23 @@ class BookControllerTest {
     }
 
     @Test
+    void shouldActivateBookMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(bookService.updateBookActivationStatus(bookId, true)).thenThrow(new BookStoreServiceException("An error occurred during attempt to change book status."));
+
+        String url = String.format("/api/books/activation/%s/activate",bookId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).existsByBookId(bookId);
+        verify(bookService).updateBookActivationStatus(bookId, true);
+    }
+
+    @Test
     void shouldDeactivateBookMethodReturnOkStatusWithBook() throws Exception {
         String bookId = "someBookId";
         BookDto bookDto = BookGenerator.generateBookDtoWithActiveStatus(false);
@@ -478,6 +573,23 @@ class BookControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+    }
+
+    @Test
+    void shouldDeactivateBookMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(bookService.updateBookActivationStatus(bookId, false)).thenThrow(new BookStoreServiceException("An error occurred during attempt to change book status."));
+
+        String url = String.format("/api/books/activation/%s/deactivate",bookId);
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).existsByBookId(bookId);
+        verify(bookService).updateBookActivationStatus(bookId, false);
     }
 
     @Test
@@ -600,6 +712,26 @@ class BookControllerTest {
     }
 
     @Test
+    void shouldUpdateBookMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId = "someBookId";
+        BookDto bookDto = BookGenerator.generateBookDto();
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        when(bookService.saveBook(any(BookDto.class), anyString())).thenThrow(new BookStoreServiceException("An error occurred during saving book to database."));
+
+        String url = "/api/books/"+bookId;
+
+        mockMvc.perform(put(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(bookDto)))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).existsByBookId(bookId);
+        verify(bookService).saveBook(any(BookDto.class), anyString());
+    }
+
+    @Test
     void shouldDeleteBookMethodRemoveBookWithStatusNoContent() throws Exception {
         String bookId = "someBookId";
         when(bookService.existsByBookId(bookId)).thenReturn(true);
@@ -630,6 +762,24 @@ class BookControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+    }
+
+    @Test
+    void shouldDeleteBookMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        String bookId = "someBookId";
+        when(bookService.existsByBookId(bookId)).thenReturn(true);
+        doThrow(new BookStoreServiceException("An error occurred during attempt to delete book."))
+                .when(bookService).deleteBookById(bookId);
+
+        String url = "/api/books/"+bookId;
+
+        mockMvc.perform(delete(url)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).existsByBookId(bookId);
+        verify(bookService).deleteBookById(bookId);
     }
 
     private Page<Book> getTestBooksCollection() {

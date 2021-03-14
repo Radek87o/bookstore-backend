@@ -151,7 +151,7 @@ public class BookServiceImpl implements BookService {
             book.setActive(activationStatus);
             return bookRepository.save(book);
         } catch (NonTransientDataAccessException exc) {
-            String message = "An error occurred during attempt to deactivate book.";
+            String message = "An error occurred during attempt to change book status.";
             log.error(message, exc);
             throw new BookStoreServiceException(message, exc);
         }
