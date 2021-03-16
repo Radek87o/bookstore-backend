@@ -22,4 +22,7 @@ public interface BookRepository extends JpaRepository<Book, String> {
 
     @Query(value = "SELECT b FROM Book b WHERE b.promoPrice!=null AND b.promoPrice>0")
     Page<Book> findBooksWithPromo(Pageable pageable);
+
+    @Query(value = "SELECT b FROM Book b WHERE b.active=TRUE")
+    Page<Book> findActiveBooks(Pageable pageable);
 }

@@ -328,6 +328,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
+        verify(bookService).findBookByTitle(any(BookDto.class));
         verify(bookService, never()).saveBook(bookDto, null);
     }
 
@@ -487,6 +488,56 @@ class BookControllerTest {
     }
 
     @Test
+    void shouldFindActiveBooksMethodReturnPageOfBooksWhenParamsNotPassed() throws Exception {
+        Page<Book> books = getTestBooksCollection();
+
+        when(bookService.findActiveBooks(0,24)).thenReturn(books);
+
+        String url = "/api/books/active";
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(books)));
+
+        verify(bookService).findActiveBooks(0,24);
+    }
+
+    @Test
+    void shouldFindActiveBooksMethodReturnCorrectBooksPageWhenParamsPassed() throws Exception {
+        Page<Book> books = getTestBooksCollection();
+
+        when(bookService.findActiveBooks(0,5)).thenReturn(books);
+
+        String url = "/api/books/active";
+
+        mockMvc.perform(get(url)
+                .param("page", "0")
+                .param("size", "5")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(books)));
+
+        verify(bookService).findActiveBooks(0,5);
+    }
+
+    @Test
+    void shouldFindActiveBooksMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
+        when(bookService.findActiveBooks(0,24)).thenThrow(new BookStoreServiceException("An error occurred during attempt to find active books."));
+
+        String url = "/api/books/active";
+
+        mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        verify(bookService).findActiveBooks(0, 24);
+    }
+
+    @Test
     void shouldActivateBookMethodReturnOkStatusWithBook() throws Exception {
         String bookId = "someBookId";
         BookDto bookDto = BookGenerator.generateBookDtoWithActiveStatus(true);
@@ -502,6 +553,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(book)));
 
+        verify(bookService).existsByBookId(bookId);
         verify(bookService).updateBookActivationStatus(bookId, true);
     }
 
@@ -520,6 +572,7 @@ class BookControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+        verify(bookService, never()).updateBookActivationStatus(bookId, true);
     }
 
     @Test
@@ -555,6 +608,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(book)));
 
+        verify(bookService).existsByBookId(bookId);
         verify(bookService).updateBookActivationStatus(bookId, false);
     }
 
@@ -573,6 +627,7 @@ class BookControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+        verify(bookService, never()).updateBookActivationStatus(bookId, false);
     }
 
     @Test
@@ -633,6 +688,7 @@ class BookControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+        verify(bookService, never()).saveBook(bookDto, bookId);
     }
 
     @Test
@@ -651,6 +707,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
         verify(bookService, never()).saveBook(null, bookId);
     }
 
@@ -671,6 +728,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
         verify(bookService, never()).saveBook(bookDto, bookId);
     }
 
@@ -691,6 +749,7 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
         verify(bookService, never()).saveBook(bookDto, bookId);
     }
 
@@ -698,7 +757,6 @@ class BookControllerTest {
     @MethodSource("setOfInvalidBookDtos")
     void shouldUpdateBookMethodReturnBadRequestWhenBookDtoIsInvalid(BookDto bookDto) throws Exception {
         String bookId = "someBookId";
-        when(bookService.existsByBookId(bookId)).thenReturn(true);
 
         String url = "/api/books/"+bookId;
 
@@ -762,6 +820,7 @@ class BookControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+        verify(bookService, never()).deleteBookById(bookId);
     }
 
     @Test

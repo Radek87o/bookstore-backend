@@ -19,7 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import java.time.LocalDate;
@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,7 +49,7 @@ class CategoryControllerTest {
 
         when(categoryService.getAllCategories()).thenReturn(categories);
 
-        String url = "/api/category";
+        String url = "/api/categories";
 
         mockMvc.perform(get(url)
                 .accept(MediaType.APPLICATION_JSON))
@@ -65,7 +64,7 @@ class CategoryControllerTest {
     void shouldGetAllCategoriesMethodReturnInternalServerErrorWhenSomethingWentWrongOnServer() throws Exception {
         when(categoryService.getAllCategories()).thenThrow(new BookStoreServiceException("An error occurred during retrieving categories from db"));
 
-        String url = "/api/category";
+        String url = "/api/categories";
 
         mockMvc.perform(get(url)
                 .accept(MediaType.APPLICATION_JSON))
@@ -82,7 +81,7 @@ class CategoryControllerTest {
         when(categoryService.existByCategoryId(categoryWrapper.getId())).thenReturn(true);
         when(categoryService.findByCategoryId(categoryWrapper.getId(), 0, 24)).thenReturn(categoryWrapper);
 
-        String url = String.format("/api/category/%s", categoryWrapper.getId());
+        String url = String.format("/api/categories/%s", categoryWrapper.getId());
 
         mockMvc.perform(get(url)
                 .accept(MediaType.APPLICATION_JSON))
@@ -90,6 +89,7 @@ class CategoryControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(categoryWrapper)));
 
+        verify(categoryService).existByCategoryId(categoryWrapper.getId());
         verify(categoryService).findByCategoryId(categoryWrapper.getId(), 0, 24);
     }
 
@@ -100,7 +100,7 @@ class CategoryControllerTest {
         when(categoryService.existByCategoryId(categoryWrapper.getId())).thenReturn(true);
         when(categoryService.findByCategoryId(categoryWrapper.getId(), 0, 5)).thenReturn(categoryWrapper);
 
-        String url = String.format("/api/category/%s", categoryWrapper.getId());
+        String url = String.format("/api/categories/%s", categoryWrapper.getId());
 
         mockMvc.perform(get(url)
                 .param("page", "0")
@@ -110,6 +110,7 @@ class CategoryControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(categoryWrapper)));
 
+        verify(categoryService).existByCategoryId(categoryWrapper.getId());
         verify(categoryService).findByCategoryId(categoryWrapper.getId(), 0, 5);
     }
 
@@ -120,7 +121,7 @@ class CategoryControllerTest {
 
         when(categoryService.existByCategoryId(categoryId)).thenReturn(false);
 
-        String url = String.format("/api/category/%s", categoryId);
+        String url = String.format("/api/categories/%s", categoryId);
 
         mockMvc.perform(get(url)
                 .accept(MediaType.APPLICATION_JSON))
@@ -129,6 +130,7 @@ class CategoryControllerTest {
                 .andExpect(content().string(message));
 
         verify(categoryService).existByCategoryId(categoryId);
+        verify(categoryService, never()).findByCategoryId(categoryId, 0, 24);
     }
 
     @Test
@@ -138,7 +140,7 @@ class CategoryControllerTest {
         when(categoryService.findByCategoryId(categoryId, 0, 24))
                 .thenThrow(new BookStoreServiceException("An error occurred during retrieving category by id"));
 
-        String url = String.format("/api/category/%s", categoryId);
+        String url = String.format("/api/categories/%s", categoryId);
 
         mockMvc.perform(get(url)
                 .accept(MediaType.APPLICATION_JSON))

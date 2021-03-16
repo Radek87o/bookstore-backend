@@ -58,7 +58,6 @@ class CommentServiceTest {
     @Test
     void shouldGetCommentsByBookIdMethodReturnPageOfComments() {
         String bookId = "testBookId";
-        PageRequest pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updateDate"));
         List<Comment> comments = generateExampleOfCommentsPage();
         when(commentRepository.findByBookId(bookId)).thenReturn(comments);
 
@@ -145,6 +144,8 @@ class CommentServiceTest {
 
         assertEquals(book.getComments(), result);
 
+        verify(bookRepository).findById(book.getId());
+        verify(userRepository).findById(user.getId());
         verify(bookRepository).save(any(Book.class));
     }
 
@@ -166,6 +167,8 @@ class CommentServiceTest {
         doThrow(new NonTransientDataAccessException(""){}).when(bookRepository).save(book);
 
         assertThrows(BookStoreServiceException.class, () -> commentService.saveComment(commentDto, bookId, userId));
+
+        verify(bookRepository).findById(bookId);
         verify(bookRepository).save(book);
     }
 
@@ -176,6 +179,4 @@ class CommentServiceTest {
 
         return Arrays.asList(comment3, comment2, comment1);
     }
-
-
 }

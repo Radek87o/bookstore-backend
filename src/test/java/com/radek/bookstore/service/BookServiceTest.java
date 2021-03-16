@@ -62,12 +62,13 @@ class BookServiceTest {
     void shouldListAllBooks() {
         Page<Book> booksPage = generateExamplePageOfBooks();
 
-        when(bookRepository.findAll(PageRequest.of(0,5, Sort.by("lastUpdateDate").descending()))).thenReturn(booksPage);
+        PageRequest pageRequest = PageRequest.of(0, 5, Sort.by("lastUpdateDate").descending());
+        when(bookRepository.findAll(pageRequest)).thenReturn(booksPage);
         Page<Book> resultZero = bookService.listAllBooks(0, 5);
 
         assertEquals(booksPage, resultZero);
 
-        verify(bookRepository).findAll(PageRequest.of(0,5, Sort.by("lastUpdateDate").descending()));
+        verify(bookRepository).findAll(pageRequest);
     }
 
     @Test
@@ -365,7 +366,7 @@ class BookServiceTest {
     }
 
     @Test
-    void shouldFindBooksWithPromoMethodThrowBookstoreServiceExceptionWhenNonTransientDataAccesObjectOccurs() {
+    void shouldFindBooksWithPromoMethodThrowBookstoreServiceExceptionWhenNonTransientDataAccessObjectOccurs() {
         PageRequest pageRequest = PageRequest.of(0, 5, Sort.by("lastUpdateDate").descending());
         doThrow(new NonTransientDataAccessException(""){})
                 .when(bookRepository).findBooksWithPromo(pageRequest);
@@ -374,6 +375,30 @@ class BookServiceTest {
                 () -> bookService.findBooksWithPromo(0, 5));
 
         verify(bookRepository).findBooksWithPromo(pageRequest);
+    }
+
+    @Test
+    void shouldFindActiveBooksMethodReturnPageOfBooks() {
+        Page<Book> booksPage = generateExamplePageOfBooks();
+
+        when(bookRepository.findActiveBooks(PageRequest.of(0,5, Sort.by("lastUpdateDate").descending()))).thenReturn(booksPage);
+        Page<Book> resultZero = bookService.findActiveBooks(0, 5);
+
+        assertEquals(booksPage, resultZero);
+
+        verify(bookRepository).findActiveBooks(PageRequest.of(0,5, Sort.by("lastUpdateDate").descending()));
+    }
+
+    @Test
+    void shouldFindActiveBooksMethodThrowBookstoreServiceExceptionWhenNonTransientDataAccessObjectOccurs() {
+        PageRequest pageRequest = PageRequest.of(0, 5, Sort.by("lastUpdateDate").descending());
+        doThrow(new NonTransientDataAccessException(""){})
+                .when(bookRepository).findActiveBooks(pageRequest);
+
+        assertThrows(BookStoreServiceException.class,
+                () -> bookService.findActiveBooks(0, 5));
+
+        verify(bookRepository).findActiveBooks(pageRequest);
     }
 
     @ParameterizedTest
@@ -396,6 +421,7 @@ class BookServiceTest {
         assertEquals(activationStatus, result.getActive());
 
         verify(bookRepository).findById(bookId);
+        verify(bookRepository).save(bookToReturn);
     }
 
     private static Stream<Arguments> activationStatuses() {
@@ -418,6 +444,7 @@ class BookServiceTest {
         assertThrows(BookStoreServiceException.class,
                 () -> bookService.updateBookActivationStatus(bookId, true));
 
+        verify(bookRepository).findById(bookId);
         verify(bookRepository).save(any(Book.class));
     }
 
@@ -455,5 +482,4 @@ class BookServiceTest {
 
         return new PageImpl<>(Arrays.asList(book1, book4, book3, book2, book5));
     }
-
 }

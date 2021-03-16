@@ -16,5 +16,4 @@ class BookstoreBackendApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }
