@@ -119,6 +119,7 @@ class RatingServiceTest {
 
         assertEquals(3, resultRating.getVote());
 
+        verify(ratingRepository).findByBookIdAndUserId(bookId, userId);
         verify(ratingRepository).save(any(Rating.class));
     }
 
@@ -157,6 +158,9 @@ class RatingServiceTest {
         assertTrue(result.isPresent());
         assertEquals(5, savedRating.getVote());
 
+        verify(ratingRepository).findByBookIdAndUserId(bookId, userId);
+        verify(bookRepository).findById(bookId);
+        verify(userRepository).findById(userId);
         verify(bookRepository).save(book);
     }
 
@@ -170,6 +174,8 @@ class RatingServiceTest {
         doThrow(new NonTransientDataAccessException(""){}).when(ratingRepository).save(any(Rating.class));
 
         assertThrows(BookStoreServiceException.class, () -> ratingService.saveRating(ratingDto, bookId, userId));
+
+        verify(ratingRepository).findByBookIdAndUserId(bookId, userId);
         verify(ratingRepository).save(any(Rating.class));
     }
 
@@ -187,6 +193,10 @@ class RatingServiceTest {
         doThrow(new NonTransientDataAccessException(""){}).when(bookRepository).save(book);
 
         assertThrows(BookStoreServiceException.class, () -> ratingService.saveRating(ratingDto, bookId, userId));
+
+        verify(ratingRepository).findByBookIdAndUserId(bookId, userId);
+        verify(bookRepository).findById(bookId);
+        verify(userRepository).findById(userId);
         verify(bookRepository).save(book);
     }
 

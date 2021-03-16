@@ -53,6 +53,7 @@ class AuthorControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(authorWrapper)));
 
+        verify(authorService).existByAuthorId(authorWrapper.getId());
         verify(authorService).findByAuthorId(authorWrapper.getId(), 0, 24);
     }
 
@@ -73,6 +74,7 @@ class AuthorControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(authorWrapper)));
 
+        verify(authorService).existByAuthorId(authorWrapper.getId());
         verify(authorService).findByAuthorId(authorWrapper.getId(), 0, 5);
     }
 

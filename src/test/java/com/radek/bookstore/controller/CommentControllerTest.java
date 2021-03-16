@@ -70,6 +70,7 @@ class CommentControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(commentsJson)));
 
+        verify(bookService).existsByBookId(bookId);
         verify(commentService).getCommentsByBookId(bookId, 0);
     }
 
@@ -79,7 +80,6 @@ class CommentControllerTest {
         Page<CommentJson> commentsJson = getPageOfTestCommentsJson();
 
         when(bookService.existsByBookId(bookId)).thenReturn(true);
-
         when(commentService.getCommentsByBookId(bookId, 0)).thenReturn(commentsJson);
 
         String url = String.format("/api/comments/%s", bookId);
@@ -91,6 +91,7 @@ class CommentControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(commentsJson)));
 
+        verify(bookService).existsByBookId(bookId);
         verify(commentService).getCommentsByBookId(bookId, 0);
     }
 
@@ -108,6 +109,7 @@ class CommentControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
         verify(commentService, never()).getCommentsByBookId(bookId, 0);
     }
 
@@ -149,6 +151,8 @@ class CommentControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(Collections.singleton(comment))));
 
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
         verify(commentService).saveComment(any(CommentDto.class), anyString(), anyString());
     }
 
@@ -161,7 +165,6 @@ class CommentControllerTest {
         String message = String.format("Book with id: %s cannot be found", bookId);
 
         when(bookService.existsByBookId(bookId)).thenReturn(false);
-        when(userService.existByUserId(userId)).thenReturn(true);
 
         mockMvc.perform(post(url)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -171,6 +174,7 @@ class CommentControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
         verify(commentService, never()).saveComment(commentDto, bookId, userId);
     }
 
@@ -193,6 +197,8 @@ class CommentControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
         verify(commentService, never()).saveComment(commentDto, bookId, userId);
     }
 
@@ -202,8 +208,6 @@ class CommentControllerTest {
         String bookId="testBookId";
         String userId = "testUserId";
         String url = String.format("/api/comments/%s/user/%s", bookId, userId);
-        when(bookService.existsByBookId(bookId)).thenReturn(true);
-        when(userService.existByUserId(userId)).thenReturn(true);
 
         mockMvc.perform(post(url)
                 .contentType(MediaType.APPLICATION_JSON)

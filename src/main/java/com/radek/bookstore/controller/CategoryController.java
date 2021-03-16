@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @CrossOrigin
 @RestController
-@RequestMapping("/api/category")
+@RequestMapping("/api/categories")
 public class CategoryController {
 
     private static final Logger log = LoggerFactory.getLogger(CategoryController.class);

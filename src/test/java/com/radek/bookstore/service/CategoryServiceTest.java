@@ -172,5 +172,4 @@ class CategoryServiceTest {
 
         return categories;
     }
-
 }

@@ -70,7 +70,6 @@ public class BookServiceImpl implements BookService {
             log.error(message, exc);
             throw new BookStoreServiceException(message, exc);
         }
-
     }
 
     @Override
@@ -165,6 +164,18 @@ public class BookServiceImpl implements BookService {
             bookRepository.deleteById(bookId);
         } catch (NonTransientDataAccessException exc) {
             String message = "An error occurred during attempt to delete book.";
+            log.error(message, exc);
+            throw new BookStoreServiceException(message, exc);
+        }
+    }
+
+    @Override
+    public Page<Book> findActiveBooks(Integer page, Integer size) {
+        try {
+            PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "lastUpdateDate"));
+            return bookRepository.findActiveBooks(pageRequest);
+        } catch (NonTransientDataAccessException exc) {
+            String message = "An error occurred during attempt to find active books.";
             log.error(message, exc);
             throw new BookStoreServiceException(message, exc);
         }

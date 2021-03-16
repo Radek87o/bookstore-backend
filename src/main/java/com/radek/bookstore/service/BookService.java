@@ -18,4 +18,5 @@ public interface BookService {
     Page<Book> findBooksWithPromo(Integer page, Integer size);
     Book updateBookActivationStatus(String bookId, boolean activationStatus);
     void deleteBookById(String bookId);
+    Page<Book> findActiveBooks(Integer page, Integer size);
 }

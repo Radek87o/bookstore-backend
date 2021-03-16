@@ -69,6 +69,7 @@ class RatingControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(bookRatings)));
 
+        verify(bookService).existsByBookId(bookId);
         verify(ratingService).getBookRatings(bookId);
     }
 
@@ -88,6 +89,7 @@ class RatingControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+        verify(ratingService, never()).getBookRatings(bookId);
     }
 
     @Test
@@ -127,6 +129,8 @@ class RatingControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(rating)));
 
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
         verify(ratingService).getBookRating(bookId, userId);
     }
 
@@ -148,6 +152,8 @@ class RatingControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(rating)));
 
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
         verify(ratingService).getBookRating(bookId, userId);
     }
 
@@ -167,6 +173,7 @@ class RatingControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+        verify(bookService).existsByBookId(bookId);
     }
 
     @Test
@@ -185,6 +192,8 @@ class RatingControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
         verify(userService).existByUserId(userId);
     }
 
@@ -231,6 +240,8 @@ class RatingControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(bookRatings)));
 
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
         verify(ratingService).saveRating(any(RatingDto.class), anyString(), anyString());
     }
 
@@ -255,6 +266,8 @@ class RatingControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
+        verify(userService).existByUserId(userId);
         verify(ratingService).saveRating(any(RatingDto.class), anyString(), anyString());
     }
 
@@ -278,6 +291,7 @@ class RatingControllerTest {
                 .andExpect(content().string(message));
 
         verify(bookService).existsByBookId(bookId);
+        verify(ratingService, never()).saveRating(ratingDto, bookId, userId);
     }
 
     @Test
@@ -300,7 +314,9 @@ class RatingControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string(message));
 
+        verify(bookService).existsByBookId(bookId);
         verify(userService).existByUserId(userId);
+        verify(ratingService, never()).saveRating(ratingDto, bookId, userId);
     }
 
     @ParameterizedTest
@@ -308,9 +324,6 @@ class RatingControllerTest {
     void shouldSaveRatingMethodReturnBadRequestStatusWhenPassedRatingDtoIsInvalid(RatingDto ratingDto) throws Exception {
         String bookId = "testBookId";
         String userId = "testUserId";
-
-        when(bookService.existsByBookId(bookId)).thenReturn(true);
-        when(userService.existByUserId(userId)).thenReturn(true);
 
         String url = String.format("/api/ratings/%s/user/%s", bookId, userId);
 
