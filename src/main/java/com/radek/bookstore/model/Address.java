@@ -1,6 +1,8 @@
 package com.radek.bookstore.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.radek.bookstore.model.dto.AddressDto;
+import com.radek.bookstore.utils.CustomRegexPatterns;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,6 +11,9 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -21,6 +26,10 @@ public class Address {
     @GeneratedValue(generator = "address_id")
     private String id;
 
+    @Column(name = "city")
+    @NotNull
+    private String city;
+
     @NotNull
     private String street;
 
@@ -28,16 +37,14 @@ public class Address {
     private String locationNumber;
 
     @NotNull
-    private String city;
-
-    @NotNull
-    @Pattern(regexp = "^(\\d{2}-\\d{3})$")
+    @Pattern(regexp = CustomRegexPatterns.ZIP_CODE_REGEX)
     private String zipCode;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user;
+    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "address")
+    private Set<User> users;
 
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL)
     @PrimaryKeyJoinColumn
     private Order order;
@@ -47,5 +54,13 @@ public class Address {
         this.locationNumber=addressDto.getLocationNumber();
         this.city=addressDto.getCity();
         this.zipCode=addressDto.getZipCode();
+    }
+
+    public void addUser(User user) {
+        if(Objects.isNull(users)) {
+            this.users=new HashSet<>();
+        }
+        this.users.add(user);
+        user.setAddress(this);
     }
 }

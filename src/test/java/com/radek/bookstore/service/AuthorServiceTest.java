@@ -4,7 +4,7 @@ import com.radek.bookstore.generators.BookGenerator;
 import com.radek.bookstore.model.Author;
 import com.radek.bookstore.model.dto.AuthorDto;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.AuthorWrapper;
+import com.radek.bookstore.model.response.AuthorWrapper;
 import com.radek.bookstore.repository.AuthorRepository;
 import com.radek.bookstore.service.impl.AuthorServiceImpl;
 import org.junit.jupiter.api.BeforeEach;

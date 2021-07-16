@@ -1,7 +1,7 @@
 package com.radek.bookstore.controller;
 
 import com.radek.bookstore.model.dto.Purchase;
-import com.radek.bookstore.model.json.PurchaseJson;
+import com.radek.bookstore.model.response.PurchaseJson;
 import com.radek.bookstore.service.CheckoutService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

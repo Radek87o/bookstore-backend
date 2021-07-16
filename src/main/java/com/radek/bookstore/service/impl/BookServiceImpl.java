@@ -5,7 +5,7 @@ import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.dto.AuthorDto;
 import com.radek.bookstore.model.dto.BookDto;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.BookJson;
+import com.radek.bookstore.model.response.BookJson;
 import com.radek.bookstore.model.mapper.BookJsonMapper;
 import com.radek.bookstore.repository.AuthorRepository;
 import com.radek.bookstore.repository.BookRepository;

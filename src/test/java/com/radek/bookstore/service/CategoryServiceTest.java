@@ -5,7 +5,7 @@ import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.Category;
 import com.radek.bookstore.model.dto.CategoryDto;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.CategoryWrapper;
+import com.radek.bookstore.model.response.CategoryWrapper;
 import com.radek.bookstore.repository.CategoryRepository;
 import com.radek.bookstore.service.impl.CategoryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;

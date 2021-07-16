@@ -1,6 +1,6 @@
 package com.radek.bookstore.controller;
 
-import com.radek.bookstore.model.json.CategoryWrapper;
+import com.radek.bookstore.model.response.CategoryWrapper;
 import com.radek.bookstore.service.CategoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

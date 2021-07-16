@@ -1,7 +1,7 @@
 package com.radek.bookstore.model.mapper;
 
 import com.radek.bookstore.model.Book;
-import com.radek.bookstore.model.json.BookJson;
+import com.radek.bookstore.model.response.BookJson;
 import ma.glasnost.orika.MapperFactory;
 import ma.glasnost.orika.impl.ConfigurableMapper;
 import org.springframework.stereotype.Component;

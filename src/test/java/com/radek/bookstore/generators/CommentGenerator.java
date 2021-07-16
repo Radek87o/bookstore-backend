@@ -1,13 +1,9 @@
 package com.radek.bookstore.generators;
 
-import com.radek.bookstore.model.Address;
 import com.radek.bookstore.model.Comment;
 import com.radek.bookstore.model.User;
-import com.radek.bookstore.model.dto.AddressDto;
 import com.radek.bookstore.model.dto.CommentDto;
-import com.radek.bookstore.model.dto.UserDto;
-import com.radek.bookstore.model.json.CommentJson;
-import org.apache.tomcat.jni.Local;
+import com.radek.bookstore.model.response.CommentJson;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

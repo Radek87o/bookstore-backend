@@ -2,7 +2,7 @@ package com.radek.bookstore.controller;
 
 import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.dto.BookDto;
-import com.radek.bookstore.model.json.BookJson;
+import com.radek.bookstore.model.response.BookJson;
 import com.radek.bookstore.service.BookService;
 import com.radek.bookstore.utils.UrlCustomValidator;
 import org.slf4j.Logger;

@@ -4,16 +4,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.radek.bookstore.generators.BookGenerator;
 import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.AuthorWrapper;
+import com.radek.bookstore.model.response.AuthorWrapper;
+import com.radek.bookstore.security.filter.JwtAccessDeniedHandler;
+import com.radek.bookstore.security.filter.JwtAuthenticationEntryPoint;
+import com.radek.bookstore.security.utility.JwtTokenProvider;
 import com.radek.bookstore.service.AuthorService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,11 +32,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
-@WebMvcTest(AuthorController.class)
+@WebMvcTest(value = AuthorController.class)
+@WithMockUser(username = "user", roles = "USER")
 class AuthorControllerTest {
 
     @MockBean
     AuthorService authorService;
+
+    @MockBean
+    JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    @MockBean
+    JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @MockBean
+    @Qualifier("userDetailsService")
+    UserDetailsService userDetailsService;
 
     @Autowired
     private MockMvc mockMvc;

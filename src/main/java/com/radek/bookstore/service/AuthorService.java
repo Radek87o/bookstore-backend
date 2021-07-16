@@ -1,6 +1,6 @@
 package com.radek.bookstore.service;
 
-import com.radek.bookstore.model.json.AuthorWrapper;
+import com.radek.bookstore.model.response.AuthorWrapper;
 
 public interface AuthorService {
 

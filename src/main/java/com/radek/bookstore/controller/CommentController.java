@@ -2,7 +2,7 @@ package com.radek.bookstore.controller;
 
 import com.radek.bookstore.model.Comment;
 import com.radek.bookstore.model.dto.CommentDto;
-import com.radek.bookstore.model.json.CommentJson;
+import com.radek.bookstore.model.response.CommentJson;
 import com.radek.bookstore.service.BookService;
 import com.radek.bookstore.service.CommentService;
 import com.radek.bookstore.service.UserService;

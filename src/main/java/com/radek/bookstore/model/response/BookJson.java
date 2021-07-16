@@ -1,4 +1,4 @@
-package com.radek.bookstore.model.json;
+package com.radek.bookstore.model.response;
 
 import com.radek.bookstore.model.Author;
 import com.radek.bookstore.model.Category;

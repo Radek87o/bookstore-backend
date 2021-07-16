@@ -3,7 +3,7 @@ package com.radek.bookstore.service.impl;
 import com.radek.bookstore.model.Author;
 import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.AuthorWrapper;
+import com.radek.bookstore.model.response.AuthorWrapper;
 import com.radek.bookstore.repository.AuthorRepository;
 import com.radek.bookstore.service.AuthorService;
 import org.slf4j.Logger;
