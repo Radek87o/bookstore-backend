@@ -2,7 +2,7 @@ package com.radek.bookstore.service;
 
 import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.dto.BookDto;
-import com.radek.bookstore.model.json.BookJson;
+import com.radek.bookstore.model.response.BookJson;
 import org.springframework.data.domain.Page;
 
 import java.util.Optional;

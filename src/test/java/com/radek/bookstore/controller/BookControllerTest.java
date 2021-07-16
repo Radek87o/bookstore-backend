@@ -7,8 +7,11 @@ import com.radek.bookstore.model.Book;
 import com.radek.bookstore.model.dto.AuthorDto;
 import com.radek.bookstore.model.dto.BookDto;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.BookJson;
+import com.radek.bookstore.model.response.BookJson;
 import com.radek.bookstore.model.mapper.BookJsonMapper;
+import com.radek.bookstore.security.filter.JwtAccessDeniedHandler;
+import com.radek.bookstore.security.filter.JwtAuthenticationEntryPoint;
+import com.radek.bookstore.security.utility.JwtTokenProvider;
 import com.radek.bookstore.service.BookService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,11 +19,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,17 +40,33 @@ import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @ExtendWith(SpringExtension.class)
-@WebMvcTest(BookController.class)
+@WebMvcTest(value = BookController.class)
+@WithMockUser(username = "user", roles = "ADMIN")
+@AutoConfigureMockMvc(addFilters = false)
 class BookControllerTest {
 
     @MockBean
     private BookService bookService;
+
+    @MockBean
+    JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    @MockBean
+    JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @MockBean
+    @Qualifier("userDetailsService")
+    UserDetailsService userDetailsService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -168,6 +191,7 @@ class BookControllerTest {
         String url = "/api/books/";
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -184,6 +208,7 @@ class BookControllerTest {
         String url = "/api/books/";
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -249,6 +274,7 @@ class BookControllerTest {
         String message = "Book cannot be null";
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(null))
                 .accept(MediaType.APPLICATION_JSON))
@@ -266,6 +292,7 @@ class BookControllerTest {
         String message = String.format("Incorrect format of image url: %s", invalidUrl);;
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -297,6 +324,7 @@ class BookControllerTest {
         BookDto bookDto = BookGenerator.generateBookDtoWithBasePriceAndPromoPrice(BigDecimal.valueOf(23.50), BigDecimal.valueOf(24L));
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -321,6 +349,7 @@ class BookControllerTest {
                 bookToSave.getTitle(), bookToSave.getAuthor().getFirstName(), bookToSave.getAuthor().getLastName());
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -341,6 +370,7 @@ class BookControllerTest {
         String url = "/api/books";
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -639,6 +669,7 @@ class BookControllerTest {
         String url = String.format("/api/books/activation/%s/deactivate",bookId);
 
         mockMvc.perform(get(url)
+
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
@@ -658,6 +689,7 @@ class BookControllerTest {
         String url = "/api/books/"+bookId;
 
         mockMvc.perform(put(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -680,6 +712,7 @@ class BookControllerTest {
         String url = "/api/books/"+bookId;
 
         mockMvc.perform(put(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -700,6 +733,7 @@ class BookControllerTest {
         String message = "Book cannot be null";
 
         mockMvc.perform(put(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(null))
                 .accept(MediaType.APPLICATION_JSON))
@@ -721,6 +755,7 @@ class BookControllerTest {
         String message = String.format("Incorrect format of image url: %s", invalidUrl);;
 
         mockMvc.perform(put(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -742,6 +777,7 @@ class BookControllerTest {
         BookDto bookDto = BookGenerator.generateBookDtoWithBasePriceAndPromoPrice(BigDecimal.valueOf(23.50), BigDecimal.valueOf(24L));
 
         mockMvc.perform(put(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -761,6 +797,7 @@ class BookControllerTest {
         String url = "/api/books/"+bookId;
 
         mockMvc.perform(put(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -779,6 +816,7 @@ class BookControllerTest {
         String url = "/api/books/"+bookId;
 
         mockMvc.perform(put(url)
+                .with(csrf())
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(bookDto)))
@@ -798,6 +836,7 @@ class BookControllerTest {
         String url = "/api/books/"+bookId;
 
         mockMvc.perform(delete(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
@@ -815,6 +854,7 @@ class BookControllerTest {
         String url = "/api/books/"+bookId;
 
         mockMvc.perform(delete(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(message));
@@ -833,6 +873,7 @@ class BookControllerTest {
         String url = "/api/books/"+bookId;
 
         mockMvc.perform(delete(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());

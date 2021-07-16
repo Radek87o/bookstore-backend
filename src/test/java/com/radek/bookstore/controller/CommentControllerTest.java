@@ -6,7 +6,10 @@ import com.radek.bookstore.generators.CommentGenerator;
 import com.radek.bookstore.model.Comment;
 import com.radek.bookstore.model.dto.CommentDto;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.CommentJson;
+import com.radek.bookstore.model.response.CommentJson;
+import com.radek.bookstore.security.filter.JwtAccessDeniedHandler;
+import com.radek.bookstore.security.filter.JwtAuthenticationEntryPoint;
+import com.radek.bookstore.security.utility.JwtTokenProvider;
 import com.radek.bookstore.service.BookService;
 import com.radek.bookstore.service.CommentService;
 import com.radek.bookstore.service.UserService;
@@ -16,11 +19,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -28,15 +34,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
-@WebMvcTest(CommentController.class)
+@WebMvcTest(value = CommentController.class)
+@WithMockUser(username = "user", roles = "ADMIN")
 class CommentControllerTest {
 
     @MockBean
@@ -47,6 +54,19 @@ class CommentControllerTest {
 
     @MockBean
     UserService userService;
+
+    @MockBean
+    JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    @MockBean
+    JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @MockBean
+    @Qualifier("userDetailsService")
+    UserDetailsService userDetailsService;
 
     @Autowired
     MockMvc mockMvc;
@@ -144,6 +164,7 @@ class CommentControllerTest {
         when(commentService.saveComment(any(CommentDto.class), anyString(), anyString())).thenReturn(Collections.singleton(comment));
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(commentDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -167,6 +188,7 @@ class CommentControllerTest {
         when(bookService.existsByBookId(bookId)).thenReturn(false);
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(commentDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -190,6 +212,7 @@ class CommentControllerTest {
         when(userService.existByUserId(userId)).thenReturn(false);
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(commentDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -210,6 +233,7 @@ class CommentControllerTest {
         String url = String.format("/api/comments/%s/user/%s", bookId, userId);
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(commentDto))
                 .accept(MediaType.APPLICATION_JSON))
@@ -241,6 +265,7 @@ class CommentControllerTest {
         String url = String.format("/api/comments/%s/user/%s", bookId, userId);
 
         mockMvc.perform(post(url)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsBytes(commentDto)))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))

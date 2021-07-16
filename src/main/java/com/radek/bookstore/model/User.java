@@ -4,14 +4,17 @@ import com.radek.bookstore.model.dto.UserDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.*;
 
 import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
@@ -21,24 +24,36 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User {
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = "email")})
+public class User implements Serializable {
 
     @Id
     @GenericGenerator(name = "user_id", strategy = "com.radek.bookstore.model.generator.CustomStringGenerator")
     @GeneratedValue(generator = "user_id")
+    @Column(nullable = false, updatable = false)
     private String id;
 
-    @NotNull
-    @Size(min = 2)
+    @NotBlank
+    private String userId;
+
+    @NotBlank
+    @Size(min = 2, max = 50)
     private String firstName;
 
-    @NotNull
-    @Size(min = 2)
+    @NotBlank
+    @Size(min = 2, max = 50)
     private String lastName;
 
-    @NotNull
+    private String username;
+
+    @NotBlank
     @Email(message = "Given email is not valid")
     private String email;
+
+    @NotBlank
+    private String password;
+
+    private String profileImageUrl;
 
     @CreationTimestamp
     private LocalDateTime createdDate;
@@ -46,8 +61,20 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime lastUpdateDate;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id", referencedColumnName = "id")
+    private LocalDateTime lastLoginDate;
+
+    @NotBlank
+    private String role;
+
+    private String[] authorities;
+
+    private boolean isActive;
+
+    private boolean isNotLocked;
+
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @NotFound(action = NotFoundAction.IGNORE)
+    @JoinColumn(name = "address_id")
     private Address address;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
@@ -60,7 +87,8 @@ public class User {
         this.firstName=userDto.getFirstName();
         this.lastName=userDto.getLastName();
         this.email=userDto.getEmail();
-        this.address=userDto.getAddress();
+        this.username=userDto.getUsername();
+        this.password=userDto.getPassword();
     }
 
     public void addComment(Comment comment) {

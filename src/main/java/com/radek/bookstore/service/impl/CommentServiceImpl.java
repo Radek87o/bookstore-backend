@@ -5,7 +5,7 @@ import com.radek.bookstore.model.Comment;
 import com.radek.bookstore.model.User;
 import com.radek.bookstore.model.dto.CommentDto;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.CommentJson;
+import com.radek.bookstore.model.response.CommentJson;
 import com.radek.bookstore.model.mapper.CommentJsonMapper;
 import com.radek.bookstore.repository.BookRepository;
 import com.radek.bookstore.repository.CommentRepository;
@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Service
 public class CommentServiceImpl implements CommentService {
@@ -97,7 +99,9 @@ public class CommentServiceImpl implements CommentService {
 
     private CommentJson determineUsernamesToDisplay(List<Comment> comments, CommentJson commentJson) {
         Comment commentToProcess =  findCommentById(commentJson.getId(), comments);
-        String usernameToDisplay = commentToProcess.getUser().getFirstName()+" "+commentToProcess.getUser().getLastName();
+        String usernameToDisplay = isNotBlank(commentToProcess.getUser().getUsername())
+                ? commentToProcess.getUser().getUsername()
+                : commentToProcess.getUser().getFirstName()+" "+commentToProcess.getUser().getLastName();
         commentJson.setUsernameToDisplay(usernameToDisplay);
         return commentJson;
     }

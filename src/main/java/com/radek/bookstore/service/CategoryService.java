@@ -1,10 +1,9 @@
 package com.radek.bookstore.service;
 
 import com.radek.bookstore.model.Category;
-import com.radek.bookstore.model.json.CategoryWrapper;
+import com.radek.bookstore.model.response.CategoryWrapper;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface CategoryService {
 

@@ -19,3 +19,12 @@ server:
   error:
     include-message: always
     include-binding-errors: always
+
+bookstore:
+  app:
+    jwtSecret: Bookstore1996JwtSecurityUsedSpecialCharacter$
+    jwtExpirationMs: 86400000
+  profileImageSource: https://robohash.org/
+  appBaseLink: http://localhost:4200/
+  security:
+    enabled: true

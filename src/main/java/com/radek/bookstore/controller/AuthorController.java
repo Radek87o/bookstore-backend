@@ -1,6 +1,6 @@
 package com.radek.bookstore.controller;
 
-import com.radek.bookstore.model.json.AuthorWrapper;
+import com.radek.bookstore.model.response.AuthorWrapper;
 import com.radek.bookstore.service.AuthorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -8,7 +8,7 @@ import com.radek.bookstore.model.Comment;
 import com.radek.bookstore.model.User;
 import com.radek.bookstore.model.dto.CommentDto;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.json.CommentJson;
+import com.radek.bookstore.model.response.CommentJson;
 import com.radek.bookstore.model.mapper.CommentJsonMapper;
 import com.radek.bookstore.repository.BookRepository;
 import com.radek.bookstore.repository.CommentRepository;

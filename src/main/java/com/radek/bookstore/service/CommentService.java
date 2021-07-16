@@ -2,7 +2,7 @@ package com.radek.bookstore.service;
 
 import com.radek.bookstore.model.Comment;
 import com.radek.bookstore.model.dto.CommentDto;
-import com.radek.bookstore.model.json.CommentJson;
+import com.radek.bookstore.model.response.CommentJson;
 import org.springframework.data.domain.Page;
 
 import java.util.Collection;

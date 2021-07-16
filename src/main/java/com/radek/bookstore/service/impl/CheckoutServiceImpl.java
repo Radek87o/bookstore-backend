@@ -4,7 +4,7 @@ import com.radek.bookstore.model.Customer;
 import com.radek.bookstore.model.Order;
 import com.radek.bookstore.model.OrderItem;
 import com.radek.bookstore.model.dto.Purchase;
-import com.radek.bookstore.model.json.PurchaseJson;
+import com.radek.bookstore.model.response.PurchaseJson;
 import com.radek.bookstore.repository.CustomerRepository;
 import com.radek.bookstore.service.CheckoutService;
 import com.radek.bookstore.utils.UniqueId;
