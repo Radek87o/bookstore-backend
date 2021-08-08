@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 
 @Entity
@@ -23,13 +23,19 @@ public class OrderItem {
     private String imageUrl;
 
     @NotNull
+    @DecimalMin(value="0.0", inclusive = false)
+    @DecimalMax(value="999.99")
     private BigDecimal unitPrice;
 
     @NotNull
+    @Min(1)
     private Integer quantity;
 
-    @NotNull
+    @NotBlank
     private String bookId;
+
+    @NotBlank
+    private String title;
 
     @ManyToOne
     @JoinColumn(name = "order_id")

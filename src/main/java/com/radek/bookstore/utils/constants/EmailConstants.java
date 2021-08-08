@@ -9,6 +9,7 @@ public class EmailConstants {
     public static final String CC_EMAIL = "";
     public static final String EMAIL_SUBJECT = "Bookstore - dziękuję za rejestrację, aktywuj konto";
     public static final String ADD_NEW_USER_SUBJECT = "Bookstore - Twoje konto zostało utworzone, aktywuj konto";
+    public static final String ORDER_SUMMARY_MESSAGE = "Bookstore - potwierdzenie zamówienia";
     public static final String RESET_PASSWORD_SUBJECT = "Bookstore - Twoje hasło zostało zresetowane, aktywuj konto";
     public static final String GMAIL_SMTP_SERVER = "smtp.gmail.com";
     public static final String SMTP_HOST = "mail.smtp.host";

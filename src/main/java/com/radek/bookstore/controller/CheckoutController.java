@@ -3,6 +3,8 @@ package com.radek.bookstore.controller;
 import com.radek.bookstore.model.dto.Purchase;
 import com.radek.bookstore.model.response.PurchaseJson;
 import com.radek.bookstore.service.CheckoutService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +21,8 @@ public class CheckoutController {
         this.checkoutService = checkoutService;
     }
 
-    @PostMapping("/purchase")
+    @PostMapping(path = "/purchase", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> placeOrder(@Valid @RequestBody Purchase purchase) {
         PurchaseJson purchaseJson = checkoutService.placeOrder(purchase);
         return ResponseHelper.createCreatedResponse(purchaseJson);

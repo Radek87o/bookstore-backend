@@ -9,11 +9,14 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import static com.radek.bookstore.utils.CustomRegexPatterns.ZIP_CODE_REGEX;
 
 @Entity
 @Getter
@@ -27,17 +30,17 @@ public class Address {
     private String id;
 
     @Column(name = "city")
-    @NotNull
+    @NotBlank
     private String city;
 
-    @NotNull
+    @NotBlank
     private String street;
 
-    @NotNull
+    @NotBlank
     private String locationNumber;
 
     @NotNull
-    @Pattern(regexp = CustomRegexPatterns.ZIP_CODE_REGEX)
+    @Pattern(regexp = ZIP_CODE_REGEX)
     private String zipCode;
 
     @JsonIgnore
