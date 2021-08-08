@@ -1,17 +1,32 @@
 package com.radek.bookstore.service;
 
+import com.radek.bookstore.model.Order;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import static com.radek.bookstore.utils.constants.EmailConstants.*;
 
 @Service
 public class EmailService {
+
+    private final SpringTemplateEngine templateEngine;
+
+    public EmailService(SpringTemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
+    }
 
     public void sendActivationAccountMessage(String firstName, String activationLink, String email) throws MessagingException {
         Message message = createEmail(firstName, activationLink, email);
@@ -26,6 +41,42 @@ public class EmailService {
     public void resetPasswordMessage(String firstName, String activationLink, String email) throws MessagingException {
         Message message = resetPasswordEmail(firstName, activationLink, email);
         Transport.send(message, message.getAllRecipients());
+    }
+
+    public void orderSummaryMessage(String email, Order order, String firstName) throws MessagingException {
+        MimeMessage message = populateMessage(email, ORDER_SUMMARY_MESSAGE);
+
+        MimeMessageHelper helper = new MimeMessageHelper(message,
+                MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                StandardCharsets.UTF_8.name());
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("totalPrice", setPriceFormat(order.getTotalPrice()));
+        properties.put("totalQuantity", order.getTotalQuantity());
+        properties.put("items", order.getOrderItems());
+        properties.put("firstName", firstName);
+
+        String html = getHtmlContent("order-summary", properties);
+
+        helper.setTo(email);
+        helper.setFrom(new InternetAddress(FROM_EMAIL));
+        helper.setSubject(ORDER_SUMMARY_MESSAGE);
+        helper.setText(html, true);
+        Transport.send(message, message.getAllRecipients());
+    }
+
+    private String getHtmlContent(String templateName, Map<String, Object> properties) {
+        Context context = new Context();
+        context.setVariables(properties);
+        return templateEngine.process(templateName, context);
+    }
+
+    private String setPriceFormat(BigDecimal price) {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        df.setMinimumFractionDigits(0);
+        df.setGroupingUsed(false);
+        return df.format(price);
     }
 
     private Message createEmail(String firstName, String activationLink, String email) throws MessagingException {

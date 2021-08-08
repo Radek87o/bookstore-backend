@@ -7,9 +7,13 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.radek.bookstore.utils.CustomRegexPatterns.EMAIL_REGEX;
 
 @Entity
 @Getter
@@ -22,14 +26,14 @@ public class Customer {
     @GeneratedValue(generator = "customer_id")
     private String id;
 
-    @NotNull
+    @NotBlank
     private String firstName;
 
-    @NotNull
+    @NotBlank
     private String lastName;
 
     @NotNull
-    @Email(message = "Given email is not valid")
+    @Pattern(regexp = EMAIL_REGEX, message = "Given email is not valid")
     private String email;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "customer")

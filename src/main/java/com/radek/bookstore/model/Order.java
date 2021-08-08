@@ -8,6 +8,9 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,13 +29,14 @@ public class Order {
     @GeneratedValue(generator = "order_id")
     private String id;
 
-    @NotNull
     private String orderTrackingNumber;
 
     @NotNull
+    @Min(value = 1)
     private Integer totalQuantity;
 
     @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal totalPrice;
 
     @CreationTimestamp
@@ -55,6 +59,9 @@ public class Order {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "billing_address_id", referencedColumnName = "id")
     private Address billingAddress;
+
+    @Embedded
+    private CreditCard creditCard;
 
     public void addOrderItem(OrderItem orderItem) {
         if(orderItems==null) {

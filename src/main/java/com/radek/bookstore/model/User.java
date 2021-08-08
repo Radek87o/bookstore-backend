@@ -1,6 +1,7 @@
 package com.radek.bookstore.model;
 
 import com.radek.bookstore.model.dto.UserDto;
+import com.radek.bookstore.utils.CustomRegexPatterns;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import static com.radek.bookstore.utils.CustomRegexPatterns.EMAIL_REGEX;
 
 @Entity
 @Getter
@@ -47,7 +50,7 @@ public class User implements Serializable {
     private String username;
 
     @NotBlank
-    @Email(message = "Given email is not valid")
+    @Pattern(regexp = EMAIL_REGEX, message = "Given email is not valid")
     private String email;
 
     @NotBlank
