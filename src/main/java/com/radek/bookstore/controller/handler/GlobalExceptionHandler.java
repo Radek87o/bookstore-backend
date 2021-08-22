@@ -1,10 +1,7 @@
 package com.radek.bookstore.controller.handler;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.radek.bookstore.model.exception.EmailExistsException;
-import com.radek.bookstore.model.exception.EmailNotFoundException;
-import com.radek.bookstore.model.exception.UserNotFoundException;
-import com.radek.bookstore.model.exception.UsernameExistsException;
+import com.radek.bookstore.model.exception.*;
 import com.radek.bookstore.model.response.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +78,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = UserNotFoundException.class)
     public ResponseEntity<HttpResponse> userNotFound(UserNotFoundException exc){
+        return createHttpResponse(BAD_REQUEST, exc.getMessage());
+    }
+
+    @ExceptionHandler(value = PasswordNotExistsException.class)
+    public ResponseEntity<HttpResponse> emptyPassword(PasswordNotExistsException exc){
         return createHttpResponse(BAD_REQUEST, exc.getMessage());
     }
 
