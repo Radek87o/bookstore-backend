@@ -1,15 +1,9 @@
 package com.radek.bookstore.service.impl;
 
-import com.radek.bookstore.model.Address;
-import com.radek.bookstore.model.Role;
-import com.radek.bookstore.model.User;
-import com.radek.bookstore.model.UserPrincipal;
+import com.radek.bookstore.model.*;
 import com.radek.bookstore.model.dto.AddressDto;
 import com.radek.bookstore.model.dto.UserDto;
-import com.radek.bookstore.model.exception.BookStoreServiceException;
-import com.radek.bookstore.model.exception.EmailExistsException;
-import com.radek.bookstore.model.exception.UserNotFoundException;
-import com.radek.bookstore.model.exception.UsernameExistsException;
+import com.radek.bookstore.model.exception.*;
 import com.radek.bookstore.repository.AddressRepository;
 import com.radek.bookstore.repository.UserRepository;
 import com.radek.bookstore.service.EmailService;
@@ -22,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -34,7 +29,9 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static com.radek.bookstore.model.Role.ROLE_USER;
+import static com.radek.bookstore.utils.PasswordGenerator.generatePassword;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
 import static org.apache.commons.lang3.StringUtils.*;
 import static org.springframework.data.domain.Sort.Direction.ASC;
@@ -115,11 +112,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         try {
             String newUsername = isBlank(userDto.getUsername()) ? userDto.getEmail() : userDto.getUsername();
             validateNewUsernameAndEmail(EMPTY, newUsername, userDto.getEmail());
+            if(isBlank(userDto.getPassword())) {
+                String message = String.format("An error occurred during attempt to register user with email: %s, due to empty password", userDto.getEmail());
+                log.info(message);
+                throw new PasswordNotExistsException(message);
+            }
             User user = populateUserToSave(userDto, false, true, ROLE_USER);
             User savedUser = userRepository.save(user);
             emailService.sendActivationAccountMessage(savedUser.getFirstName(), generateActivationLink(user.getUserId()), user.getEmail());
+            log.info("New user with email {} successfully registered", savedUser.getEmail());
             return savedUser;
-        } catch(NonTransientDataAccessException | MessagingException exc) {
+        } catch(NonTransientDataAccessException | MessagingException | PasswordNotExistsException exc) {
             String message = String.format("An error occurred during attempt to register user with email: %s", userDto.getEmail());
             log.error(message, exc);
             throw new BookStoreServiceException(message, exc);
@@ -175,14 +178,35 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    public User findUserById(String id) throws UserNotFoundException {
+        try {
+            Optional<User> userById = userRepository.findById(id);
+            if(userById.isEmpty()) {
+                throw new UserNotFoundException(String.format("Cannot find user with id: %s", id));
+            }
+            return userById.get();
+        } catch (NonTransientDataAccessException exc) {
+            String message = String.format("An error occurred during attempt to extract user by id: %s", id);
+            log.error(message, exc);
+            throw new BookStoreServiceException(message, exc);
+        }
+    }
+
+    @Override
     public User addNewUser(UserDto userDto, String role, boolean isNonLocked, boolean isActive) throws UserNotFoundException, UsernameExistsException, EmailExistsException {
         try {
             String newUsername = isBlank(userDto.getUsername()) ? userDto.getEmail() : userDto.getUsername();
             validateNewUsernameAndEmail(EMPTY, newUsername, userDto.getEmail());
             Role newUserRole = getRoleEnumName(role);
             User user = populateUserToSave(userDto, isActive, isNonLocked, newUserRole);
+            String tempPassword = userDto.getPassword();
+            if(isBlank(tempPassword)) {
+                tempPassword = generatePassword();
+                user.setPassword(encoder.encode(tempPassword));
+            }
             User savedUser = userRepository.save(user);
-            emailService.sendAddedNewUserMessage(user.getFirstName(), generateActivationLink(user.getUserId()), userDto.getPassword(), user.getEmail());
+            emailService.sendAddedNewUserMessage(user.getFirstName(), generateActivationLink(user.getUserId()), tempPassword, user.getEmail());
+            log.info("New user with email {} successfully added to database", savedUser.getEmail());
             return savedUser;
         } catch (NonTransientDataAccessException | MessagingException exc) {
             String message = String.format("An error occurred during attempt to add new user with email: %s", userDto.getEmail());
@@ -192,18 +216,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public User updateUser(String currentUsername, UserDto userDto, String role, boolean isNonLocked, boolean isActive) throws UserNotFoundException, UsernameExistsException, EmailExistsException {
+    public User updateUser(String userId, UserDto userDto, String role, boolean isNonLocked, boolean isActive) throws UserNotFoundException, UsernameExistsException, EmailExistsException {
         try {
-            User currentUser = userRepository.findUserByCredentials(currentUsername);
+            User currentUser = userRepository.findUserById(userId);
             if(currentUser==null) {
-                String message = String.format("Attempt to update non existing currentUser with username: %s", currentUsername);
+                String message = String.format("Attempt to update non existing currentUser with username: %s", userId);
                 log.error(message);
                 throw new BookStoreServiceException(message);
             }
             String newUsername = isBlank(userDto.getUsername()) ? userDto.getEmail() : userDto.getUsername();
+            String currentUsername = isBlank(currentUser.getUsername()) ? currentUser.getEmail() : currentUser.getUsername();
             currentUser = validateNewUsernameAndEmail(currentUsername, newUsername, userDto.getEmail());
             Role newRole = getRoleEnumName(role);
+            assert currentUser != null;
             User userToUpdate = populateUserToUpdate(currentUser, userDto, isActive, isNonLocked, newRole);
+            log.info("Attempt to update user with email {}", userToUpdate.getEmail());
             return userRepository.save(userToUpdate);
         } catch (NonTransientDataAccessException exc) {
             String message = String.format("An error occurred during attempt to add new user with email: %s", userDto.getEmail());
@@ -254,6 +281,18 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         userRepository.save(user);
     }
 
+    @Override
+    public Page<User> findUserByKeyword(String keyword, Integer pageNumber, Integer pageSize) {
+        try {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            return userRepository.findUserByKeyword(keyword, pageable);
+        } catch (NonTransientDataAccessException exc) {
+            String message = "An error occurred during attempt to find user by keyword.";
+            log.error(message, exc);
+            throw new BookStoreServiceException(message, exc);
+        }
+    }
+
     private String generateUserId() {
         return randomNumeric(15);
     }
@@ -267,7 +306,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     private User populateUserToSave(UserDto userDto, boolean isActive, boolean isNonLocked, Role role) {
         User user = new User(userDto);
-        user.setPassword(encoder.encode(userDto.getPassword()));
+        if(nonNull(userDto.getPassword())) {
+            user.setPassword(encoder.encode(userDto.getPassword()));
+        }
         user.setUserId(generateUserId());
         user.setActive(isActive);
         user.setNotLocked(isNonLocked);

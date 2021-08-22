@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.mail.MessagingException;
 import javax.validation.Valid;
 
+import java.util.Objects;
+
 import static com.radek.bookstore.utils.constants.SecurityConstants.JWT_TOKEN_HEADER;
 import static java.util.Objects.isNull;
 import static org.springframework.http.HttpStatus.OK;
@@ -83,21 +85,28 @@ public class UserController {
         return ResponseHelper.createCreatedResponse(newUser);
     }
 
-    @PostMapping(path="/update", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(path="/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('user:update')")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserDto userDto,
-                                        @RequestParam(name = "currentUsername") String currentUsername,
+                                        @PathVariable(name = "userId") String userId,
                                         @RequestParam(name = "isActive", required = false, defaultValue = "true") String isActive,
                                         @RequestParam(name = "isNonLocked", required = false, defaultValue = "true") String isNonLocked,
                                         @RequestParam(name = "role") String role) throws UserNotFoundException, UsernameExistsException, EmailExistsException {
-        User updatedUser = userService.updateUser(currentUsername, userDto, role, Boolean.parseBoolean(isActive), Boolean.parseBoolean(isNonLocked));
+        User updatedUser = userService.updateUser(userId, userDto, role, Boolean.parseBoolean(isActive), Boolean.parseBoolean(isNonLocked));
         return ResponseHelper.createOkResponse(updatedUser);
     }
 
-    @GetMapping(path = "/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/username/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('user:read')")
     public ResponseEntity<?> findUser(@PathVariable("username") String username) throws UserNotFoundException {
         User user = userService.findUserByUsernameOrEmail(username);
+        return ResponseHelper.createOkResponse(user);
+    }
+
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('user:read')")
+    public ResponseEntity<?> findUserById(@PathVariable("id") String id) throws UserNotFoundException {
+        User user = userService.findUserById(id);
         return ResponseHelper.createOkResponse(user);
     }
 
@@ -118,6 +127,20 @@ public class UserController {
     public ResponseEntity<HttpResponse> activateUser(@RequestParam("userId") String userId) throws UserNotFoundException {
         userService.activateUser(userId);
         return response(OK, String.format("Account of the user with id: %s successfully activated", userId));
+    }
+
+    @GetMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> searchUserByKeyword(@RequestParam(value = "keyword", required = false) String keyword,
+                                                 @RequestParam(name = "page", required = false) Integer page,
+                                                 @RequestParam(name = "size", required = false) Integer size) {
+        if(Objects.isNull(page)) {
+            page=0;
+        }
+        if(Objects.isNull(size)) {
+            size=24;
+        }
+        Page<User> userByKeyword = userService.findUserByKeyword(keyword, page, size);
+        return ResponseHelper.createOkResponse(userByKeyword);
     }
 
     private void authenticateUser(LoginDto login) {

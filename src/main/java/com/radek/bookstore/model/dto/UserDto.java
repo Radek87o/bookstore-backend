@@ -20,7 +20,6 @@ public class UserDto {
     @Size(max = 50)
     private final String email;
 
-    @NotEmpty
     @Pattern(regexp = CustomRegexPatterns.PASSWORD_REGEX)
     private final String password;
 

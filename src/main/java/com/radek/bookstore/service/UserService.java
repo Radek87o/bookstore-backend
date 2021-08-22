@@ -21,4 +21,6 @@ public interface UserService {
     void deleteUser(String username) throws UserNotFoundException;
     void resetPassword(String email, String newPassword) throws UserNotFoundException, MessagingException;
     void activateUser(String userId) throws UserNotFoundException;
+    Page<User> findUserByKeyword(String keyword, Integer pageNumber, Integer pageSize);
+    User findUserById(String id) throws UserNotFoundException;
 }
