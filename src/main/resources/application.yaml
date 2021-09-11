@@ -1,14 +1,14 @@
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/bookstore?useSSL=false&useUnicode=yes&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&serverTimezone=Europe/Warsaw
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/bookstore
     username: bookstore
     password: bookstore
 
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         event:
           merge:
             entity_copy_observer: allow
