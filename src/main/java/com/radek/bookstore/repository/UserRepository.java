@@ -27,7 +27,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     User findUserById(String id);
 
     @Transactional
-    @Query(nativeQuery = true, value = "SELECT * FROM user u " +
+    @Query(nativeQuery = true, value = "SELECT * FROM app_users u " +
             "WHERE u.first_name LIKE CONCAT ('%',:keyword,'%') OR u.last_name LIKE CONCAT ('%',:keyword,'%') " +
             "OR u.email LIKE CONCAT ('%',:keyword,'%') OR u.username LIKE CONCAT ('%',:keyword,'%') " +
             "order by u.created_date DESC")

@@ -6,8 +6,7 @@ import com.radek.bookstore.model.Customer;
 import com.radek.bookstore.model.dto.Purchase;
 import com.radek.bookstore.model.exception.BookStoreServiceException;
 import com.radek.bookstore.model.response.PurchaseJson;
-import com.radek.bookstore.repository.BookRepository;
-import com.radek.bookstore.repository.CustomerRepository;
+import com.radek.bookstore.repository.*;
 import com.radek.bookstore.service.impl.CheckoutServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,13 +34,25 @@ public class CheckoutServiceTest {
     BookRepository bookRepository;
 
     @Mock
+    OrderRepository orderRepository;
+
+    @Mock
+    OrderItemRepository orderItemRepository;
+
+    @Mock
+    AddressRepository addressRepository;
+
+    @Mock
+    CurrentUserService currentUserService;
+
+    @Mock
     EmailService emailService;
 
     CheckoutService checkoutService;
 
     @BeforeEach
     void setup() {
-        this.checkoutService = new CheckoutServiceImpl(customerRepository, bookRepository, emailService);
+        this.checkoutService = new CheckoutServiceImpl(customerRepository, bookRepository, orderRepository, orderItemRepository, addressRepository, currentUserService, emailService);
     }
 
     @Test

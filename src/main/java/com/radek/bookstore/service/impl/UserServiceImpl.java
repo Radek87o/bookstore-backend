@@ -367,7 +367,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     private Role getRoleEnumName(String role) {
-        return Role.valueOf("ROLE_"+role.toUpperCase());
+        String roleToTransform = role.startsWith("ROLE_") ? role.toUpperCase() : "ROLE_"+role.toUpperCase();
+        return Role.valueOf(roleToTransform);
     }
 
     private void saveUserAddress(AddressDto addressDto, User userToSave) {
