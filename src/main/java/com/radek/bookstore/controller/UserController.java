@@ -10,6 +10,7 @@ import com.radek.bookstore.model.exception.UserNotFoundException;
 import com.radek.bookstore.model.exception.UsernameExistsException;
 import com.radek.bookstore.model.response.HttpResponse;
 import com.radek.bookstore.security.utility.JwtTokenProvider;
+import com.radek.bookstore.service.CurrentUserService;
 import com.radek.bookstore.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +27,7 @@ import javax.validation.Valid;
 
 import java.util.Objects;
 
+import static com.radek.bookstore.controller.ResponseHelper.*;
 import static com.radek.bookstore.utils.constants.SecurityConstants.JWT_TOKEN_HEADER;
 import static java.util.Objects.isNull;
 import static org.springframework.http.HttpStatus.OK;
@@ -38,13 +40,16 @@ public class UserController {
     public static final String EMAIL_WITH_NEW_PASSWORD_SENT = "An email with a new password sent to: ";
 
     private final UserService userService;
+    private final CurrentUserService currentUserService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
     public UserController(UserService userService,
+                          CurrentUserService currentUserService,
                           AuthenticationManager authenticationManager,
                           JwtTokenProvider jwtTokenProvider) {
         this.userService = userService;
+        this.currentUserService = currentUserService;
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
     }
@@ -53,7 +58,7 @@ public class UserController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserDto user)
             throws UserNotFoundException, UsernameExistsException, EmailExistsException {
         User registeredUser = userService.registerUser(user);
-        return ResponseHelper.createCreatedResponse(registeredUser);
+        return createCreatedResponse(registeredUser);
     }
 
     @PostMapping("/signin")
@@ -72,7 +77,7 @@ public class UserController {
         page = isNull(page) ? 0 : page;
         size = isNull(size) ? 25 : size;
         Page<User> users = userService.findAllUsers(page, size);
-        return ResponseHelper.createOkResponse(users);
+        return createOkResponse(users);
     }
 
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -82,7 +87,7 @@ public class UserController {
                                         @RequestParam(name = "isNonLocked", required = false, defaultValue = "true") String isNonLocked,
                                         @RequestParam(name = "role") String role) throws UserNotFoundException, UsernameExistsException, EmailExistsException {
         User newUser = userService.addNewUser(userDto, role, Boolean.parseBoolean(isActive), Boolean.parseBoolean(isNonLocked));
-        return ResponseHelper.createCreatedResponse(newUser);
+        return createCreatedResponse(newUser);
     }
 
     @PutMapping(path="/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -92,22 +97,35 @@ public class UserController {
                                         @RequestParam(name = "isActive", required = false, defaultValue = "true") String isActive,
                                         @RequestParam(name = "isNonLocked", required = false, defaultValue = "true") String isNonLocked,
                                         @RequestParam(name = "role") String role) throws UserNotFoundException, UsernameExistsException, EmailExistsException {
-        User updatedUser = userService.updateUser(userId, userDto, role, Boolean.parseBoolean(isActive), Boolean.parseBoolean(isNonLocked));
-        return ResponseHelper.createOkResponse(updatedUser);
+        User updatedUser = userService.updateUser(userId, userDto, role, Boolean.parseBoolean(isNonLocked), Boolean.parseBoolean(isActive));
+        return createOkResponse(updatedUser);
+    }
+
+    @PutMapping(path="/own/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('user:account')")
+    public ResponseEntity<?> updateOwnAccount(@Valid @RequestBody UserDto userDto,
+                                        @PathVariable(name = "userId") String userId) throws UserNotFoundException, UsernameExistsException, EmailExistsException {
+        User currentUser = userService.findUserById(userId);
+        User currentlyLoggedUser = currentUserService.getCurrentUser();
+        if(!currentlyLoggedUser.getId().equals(userId)) {
+            return createBadRequestResponse("Passed userId does not comply with currently logged user's id");
+        }
+        User updatedUser = userService.updateUser(userId, userDto, currentUser.getRole(), currentUser.isActive(), currentUser.isNotLocked());
+        return createOkResponse(updatedUser);
     }
 
     @GetMapping(path = "/username/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('user:read')")
     public ResponseEntity<?> findUser(@PathVariable("username") String username) throws UserNotFoundException {
         User user = userService.findUserByUsernameOrEmail(username);
-        return ResponseHelper.createOkResponse(user);
+        return createOkResponse(user);
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('user:read')")
     public ResponseEntity<?> findUserById(@PathVariable("id") String id) throws UserNotFoundException {
         User user = userService.findUserById(id);
-        return ResponseHelper.createOkResponse(user);
+        return createOkResponse(user);
     }
 
     @PostMapping(path = "/resetPassword", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -140,7 +158,7 @@ public class UserController {
             size=24;
         }
         Page<User> userByKeyword = userService.findUserByKeyword(keyword, page, size);
-        return ResponseHelper.createOkResponse(userByKeyword);
+        return createOkResponse(userByKeyword);
     }
 
     private void authenticateUser(LoginDto login) {

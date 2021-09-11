@@ -15,9 +15,11 @@ public interface BookRepository extends JpaRepository<Book, String> {
 
     @Transactional
     @Query(nativeQuery = true, value = "SELECT * FROM book b JOIN author a ON b.author_id=a.id " +
-                                       "WHERE b.title LIKE CONCAT ('%',:keyword,'%') OR b.subtitle LIKE CONCAT ('%',:keyword,'%') " +
-                                        "OR a.first_name LIKE CONCAT ('%',:keyword,'%') OR a.last_name LIKE CONCAT ('%',:keyword,'%') " +
-                                        "order by b.created_date DESC")
+                                       "WHERE LOWER(b.title) LIKE CONCAT ('%',LOWER(:keyword),'%') " +
+                                        "OR LOWER(b.subtitle) LIKE CONCAT ('%',LOWER(:keyword),'%') " +
+                                        "OR LOWER(a.first_name) LIKE LOWER(CONCAT ('%',:keyword,'%')) " +
+                                        "OR LOWER(a.last_name) LIKE LOWER(CONCAT ('%',:keyword,'%')) " +
+                                        "ORDER BY b.created_date DESC")
     Page<Book> findBookByKeyword(@RequestParam("keyword") String keyword, Pageable pageable);
 
     @Query(value = "SELECT b FROM Book b WHERE b.promoPrice!=null AND b.promoPrice>0")

@@ -27,7 +27,7 @@ import static com.radek.bookstore.utils.CustomRegexPatterns.EMAIL_REGEX;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames = "email")})
+@Table(name="app_users", uniqueConstraints = {@UniqueConstraint(columnNames = "email")})
 public class User implements Serializable {
 
     @Id

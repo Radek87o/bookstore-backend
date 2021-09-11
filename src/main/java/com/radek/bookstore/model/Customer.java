@@ -24,6 +24,7 @@ public class Customer {
     @Id
     @GenericGenerator(name = "customer_id", strategy = "com.radek.bookstore.model.generator.CustomStringGenerator")
     @GeneratedValue(generator = "customer_id")
+    @Column(name = "c_id")
     private String id;
 
     @NotBlank

@@ -10,8 +10,8 @@ import com.radek.bookstore.model.response.PurchaseJson;
 import com.radek.bookstore.security.filter.JwtAccessDeniedHandler;
 import com.radek.bookstore.security.filter.JwtAuthenticationEntryPoint;
 import com.radek.bookstore.security.utility.JwtTokenProvider;
-import com.radek.bookstore.service.AuthorService;
 import com.radek.bookstore.service.CheckoutService;
+import com.radek.bookstore.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -53,6 +53,9 @@ class CheckoutControllerTest {
 
     @MockBean
     CheckoutService checkoutService;
+
+    @MockBean
+    UserService userService;
 
     @MockBean
     JwtTokenProvider jwtTokenProvider;
