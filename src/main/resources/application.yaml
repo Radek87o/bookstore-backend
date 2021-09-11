@@ -25,6 +25,6 @@ bookstore:
     jwtSecret: Bookstore1996JwtSecurityUsedSpecialCharacter$
     jwtExpirationMs: 86400000
   profileImageSource: https://robohash.org/
-  appBaseLink: http://localhost:4200/
+  appBaseLink: https://bookstore-rornat.herokuapp.com/
   security:
     enabled: true
