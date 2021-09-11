@@ -91,7 +91,7 @@ public class UserController {
     }
 
     @PutMapping(path="/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
-//    @PreAuthorize("hasAnyAuthority('user:update')")
+    @PreAuthorize("hasAnyAuthority('user:update')")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserDto userDto,
                                         @PathVariable(name = "userId") String userId,
                                         @RequestParam(name = "isActive", required = false, defaultValue = "true") String isActive,
@@ -122,7 +122,7 @@ public class UserController {
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-//    @PreAuthorize("hasAnyAuthority('user:read')")
+    @PreAuthorize("hasAnyAuthority('user:read')")
     public ResponseEntity<?> findUserById(@PathVariable("id") String id) throws UserNotFoundException {
         User user = userService.findUserById(id);
         return createOkResponse(user);
